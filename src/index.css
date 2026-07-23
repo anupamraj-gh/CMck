@@ -1,0 +1,270 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Fraunces:opsz,wght,ital@9..144,400,0;9..144,500,0;9..144,600,0;9..144,700,0;9..144,600,1&family=Nunito:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-hand: 'Caveat', cursive;
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Nunito', system-ui, sans-serif;
+  --font-mono: 'Space Mono', 'Courier New', monospace;
+
+  /* Backgrounds */
+  --color-lavender: #f2eefb;
+  --color-lavender-deep: #e6def7;
+  --color-purple: #ded0f2;
+  --color-purple-deep: #c9b3e8;
+  --color-paper: #fffdf8;
+  --color-cream: #faf5e8;
+
+  /* Ink */
+  --color-ink: #3a3145;
+  --color-ink-soft: #6e6278;
+  --color-ink-faint: #9c90a8;
+
+  /* Accents (muted, never saturated) */
+  --color-pink: #f3d6de;
+  --color-pink-deep: #e8b3c3;
+  --color-butter: #f5e3ab;
+  --color-butter-deep: #ecd07f;
+  --color-mint: #cbe8d6;
+  --color-mint-deep: #a6d4b8;
+  --color-blue: #d2e2f5;
+  --color-blue-deep: #aecbe8;
+  --color-peach: #f3ddc4;
+  --color-peach-deep: #e8bd91;
+  --color-coral: #d98a76;
+  --color-coral-deep: #c26e58;
+
+  --shadow-color: 260 20% 30%;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-slow: float 9s ease-in-out infinite;
+  --animate-wiggle: wiggle 4s ease-in-out infinite;
+  --animate-pop: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-drop: drop 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-sparkle: sparkle 2.4s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(var(--tw-rotate, 0deg)); }
+    50% { transform: translateY(-10px) rotate(var(--tw-rotate, 0deg)); }
+  }
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  @keyframes pop {
+    0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+    60% { transform: scale(1.08) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(var(--tw-rotate, 0deg)); }
+  }
+  @keyframes drop {
+    0% { transform: translateY(-40px) rotate(-6deg); opacity: 0; }
+    100% { transform: translateY(0) rotate(var(--tw-rotate, 0deg)); opacity: 1; }
+  }
+  @keyframes sparkle {
+    0%, 100% { opacity: 0.4; transform: scale(0.85) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.1) rotate(15deg); }
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-ink-faint);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-lavender text-ink font-sans antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+
+  ::selection {
+    background: var(--color-butter-deep);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2.5px dashed var(--color-coral-deep);
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  /* subtle paper grain, tiled, cheap */
+  .bg-grain {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(58, 49, 69, 0.055) 1px, transparent 0);
+    background-size: 16px 16px;
+  }
+
+  .paper-texture {
+    background-color: var(--color-paper);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(58, 49, 69, 0.05) 1px, transparent 0);
+    background-size: 14px 14px;
+  }
+
+  /* layered paper shadow system — each tier stacks thin+soft+deep so
+     depth reads as physical paper thickness, not a single flat drop-shadow */
+  .craft-shadow-sm {
+    box-shadow: 0 2px 3px rgba(58, 49, 69, 0.07);
+  }
+
+  .craft-shadow {
+    box-shadow:
+      0 2px 3px rgba(58, 49, 69, 0.06),
+      0 8px 20px -6px rgba(58, 49, 69, 0.16);
+  }
+
+  .craft-shadow-lg {
+    box-shadow:
+      0 2px 3px rgba(58, 49, 69, 0.06),
+      0 10px 22px -6px rgba(58, 49, 69, 0.14),
+      0 28px 50px -16px rgba(58, 49, 69, 0.28);
+  }
+
+  .wobble-1 { border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; }
+  .wobble-2 { border-radius: 20px 60px 20px 60px / 60px 20px 60px 20px; }
+  .wobble-3 { border-radius: 34px 12px 30px 14px / 14px 30px 12px 34px; }
+  .wobble-4 { border-radius: 16px 40px 16px 40px / 40px 16px 40px 16px; }
+
+  .text-stroke-ink {
+    -webkit-text-stroke: 1.5px var(--color-ink);
+  }
+
+  /* notebook ruled paper */
+  .ruled-paper {
+    background-color: var(--color-paper);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 34px,
+      rgba(174, 203, 232, 0.55) 34px,
+      rgba(174, 203, 232, 0.55) 35px
+    );
+    background-position: 0 8px;
+  }
+
+  .ruled-paper-margin {
+    position: relative;
+  }
+  .ruled-paper-margin::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 44px;
+    width: 1.5px;
+    background: rgba(216, 145, 158, 0.45);
+  }
+
+  /* ticket / receipt notch cutouts, matches surrounding bg via --notch-bg */
+  .ticket-notch {
+    position: relative;
+  }
+  .ticket-notch::before,
+  .ticket-notch::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--notch-bg, var(--color-lavender));
+    z-index: 1;
+  }
+  .ticket-notch::before { left: -11px; }
+  .ticket-notch::after { right: -11px; }
+
+  .perforated-top {
+    border-top: 2px dashed var(--color-ink-faint);
+  }
+
+  /* deckle / torn paper edge, sits at top of an element */
+  .deckle-top {
+    position: relative;
+  }
+  .deckle-top::before {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background-image:
+      linear-gradient(135deg, transparent 8px, var(--deckle-bg, var(--color-paper)) 8px),
+      linear-gradient(-135deg, transparent 8px, var(--deckle-bg, var(--color-paper)) 8px);
+    background-position: left bottom;
+    background-repeat: repeat-x;
+    background-size: 16px 16px;
+  }
+
+  .tape-shadow {
+    box-shadow: 0 2px 4px rgba(58, 49, 69, 0.15);
+  }
+
+  .rotate-hover {
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+  }
+
+  /* deckle / torn paper edge, sits at bottom of an element */
+  .deckle-bottom {
+    position: relative;
+  }
+  .deckle-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background-image:
+      linear-gradient(45deg, transparent 8px, var(--deckle-bg, var(--color-paper)) 8px),
+      linear-gradient(-45deg, transparent 8px, var(--deckle-bg, var(--color-paper)) 8px);
+    background-position: left top;
+    background-repeat: repeat-x;
+    background-size: 16px 16px;
+  }
+
+  /* folded page corner, tuck a triangle of shadow into a corner */
+  .page-fold {
+    position: relative;
+  }
+  .page-fold::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 26px;
+    height: 26px;
+    background: linear-gradient(135deg, transparent 50%, rgba(58, 49, 69, 0.12) 50.5%, var(--color-lavender) 51%);
+    border-radius: 0 inherit 0 0;
+  }
+
+  /* faint tactile lighting across large lavender fields */
+  .bg-vignette {
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% 0%, rgba(255, 253, 248, 0.55), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 100% 30%, rgba(222, 208, 242, 0.45), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 50% 100%, rgba(201, 179, 232, 0.3), transparent 65%);
+  }
+
+  .stamp-ring {
+    box-shadow:
+      0 0 0 3px var(--color-paper),
+      0 0 0 5px currentColor;
+  }
+
+  /* faint notebook grid, for the FAQ's purple page and similar */
+  .graph-paper {
+    background-image:
+      repeating-linear-gradient(to right, rgba(58, 49, 69, 0.07) 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(to bottom, rgba(58, 49, 69, 0.07) 0 1px, transparent 1px 22px);
+  }
+}

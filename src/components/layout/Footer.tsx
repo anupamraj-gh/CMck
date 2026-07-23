@@ -1,0 +1,134 @@
+import type { CSSProperties } from 'react'
+import { Link } from 'react-router-dom'
+import { MessageCircle, Mail, Camera } from 'lucide-react'
+import { SITE_CONFIG } from '@/config/site'
+import {
+  StarDoodle,
+  HeartDoodle,
+  ScribbleUnderline,
+  WashiTape,
+  StitchDivider,
+  WhiskDoodle,
+  TopHatDoodle,
+} from '@/components/decor/Doodles'
+import { PageTab } from '@/components/decor/PageTab'
+
+export function Footer() {
+  return (
+    <footer
+      className="relative mt-8 deckle-top page-fold overflow-hidden bg-ink text-cream pt-16 pb-10"
+      style={{ '--deckle-bg': 'var(--color-ink)' } as CSSProperties}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)',
+          backgroundSize: '16px 16px',
+        }}
+        aria-hidden
+      />
+
+      <WashiTape className="left-8 top-0 z-10" color="var(--color-butter)" rotate={-8} width={80} />
+
+      <StarDoodle className="absolute top-16 left-[8%] h-6 w-6 text-butter/70 animate-float-slow" />
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className="flex justify-center mb-8">
+          <PageTab label="THE LAST PAGE · Pg. 07" rotate={-2} tone="paper" />
+        </div>
+
+        <div className="text-center mb-14">
+          <WhiskDoodle className="h-9 w-5 text-cream/30 mx-auto mb-3 rotate-12" />
+          <p className="font-hand text-3xl sm:text-4xl text-butter mb-3 leading-snug max-w-xl mx-auto">
+            Thank you for letting us manage your cravings.
+            <br />
+            See you on your next order!
+          </p>
+          <p className="text-cream/55 text-sm max-w-md mx-auto mb-3">
+            {SITE_CONFIG.tagline} — every dish tells a story, every ingredient matters.
+          </p>
+          <p className="font-hand text-xl text-cream/60 mb-4">— Team {SITE_CONFIG.brandName}</p>
+          <p className="font-hand text-4xl sm:text-5xl italic text-cream -rotate-2 inline-block">
+            {SITE_CONFIG.brandName}
+          </p>
+          <ScribbleUnderline className="h-3 w-48 sm:w-56 text-coral mx-auto -mt-1" />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 pb-10">
+          <div>
+            <div className="flex items-center gap-2 justify-center sm:justify-start">
+              <TopHatDoodle className="h-6 w-6 text-cream -rotate-6" />
+              <span className="font-hand text-3xl text-cream">{SITE_CONFIG.brandName}</span>
+            </div>
+            <ScribbleUnderline className="h-2.5 w-24 text-coral mt-1 mx-auto sm:mx-0" />
+            <p className="text-cream/55 text-sm leading-relaxed mt-3">
+              A handwritten little kitchen journal — watch it made, make it yours, get it delivered.
+            </p>
+          </div>
+
+          <div className="text-center sm:text-left">
+            <h4 className="font-serif font-semibold text-sm uppercase tracking-wider text-cream/80 mb-4">
+              Quick Links
+            </h4>
+            <ul className="space-y-2.5 text-sm text-cream/60">
+              <li><a href="/#menu" className="hover:text-butter transition-colors">Our Menu</a></li>
+              <li><a href="/#about" className="hover:text-butter transition-colors">About Us</a></li>
+              <li><a href="/#faq" className="hover:text-butter transition-colors">FAQ</a></li>
+              <li><a href={`mailto:${SITE_CONFIG.supportEmail}`} className="hover:text-butter transition-colors">Contact</a></li>
+              <li><Link to="/checkout" className="hover:text-butter transition-colors">Checkout</Link></li>
+            </ul>
+          </div>
+
+          <div className="text-center sm:text-left">
+            <h4 className="font-serif font-semibold text-sm uppercase tracking-wider text-cream/80 mb-4">
+              Follow Us
+            </h4>
+            <div className="flex gap-3 justify-center sm:justify-start mb-5">
+              <a
+                href={`https://wa.me/${SITE_CONFIG.whatsappNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp"
+                className="h-10 w-10 rounded-full bg-cream/10 flex items-center justify-center text-cream/80 hover:bg-butter hover:text-ink transition-colors"
+              >
+                <MessageCircle className="h-[18px] w-[18px]" />
+              </a>
+              <a
+                href={`mailto:${SITE_CONFIG.supportEmail}`}
+                aria-label="Email"
+                className="h-10 w-10 rounded-full bg-cream/10 flex items-center justify-center text-cream/80 hover:bg-butter hover:text-ink transition-colors"
+              >
+                <Mail className="h-[18px] w-[18px]" />
+              </a>
+              <a
+                href="#"
+                aria-label="Instagram"
+                className="h-10 w-10 rounded-full bg-cream/10 flex items-center justify-center text-cream/80 hover:bg-butter hover:text-ink transition-colors"
+              >
+                <Camera className="h-[18px] w-[18px]" />
+              </a>
+            </div>
+
+            <div
+              className="relative inline-block bg-purple/90 text-ink font-hand text-base px-4 py-3 rotate-[-3deg] tape-shadow max-w-[11rem]"
+              style={{ clipPath: 'polygon(2% 8%, 40% 0%, 78% 4%, 100% 14%, 96% 88%, 60% 100%, 15% 94%, 0% 80%)' }}
+            >
+              Made with love in our kitchen. <HeartDoodle className="h-3.5 w-3.5 text-coral-deep inline shrink-0" />
+            </div>
+          </div>
+        </div>
+
+        <StitchDivider className="h-4 w-full text-cream/15 mb-6" />
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-cream/40">
+            © {new Date().getFullYear()} {SITE_CONFIG.brandName}. All rights reserved.
+          </p>
+          <p className="text-xs text-cream/40 flex items-center gap-1.5">
+            Cooked with love, delivered with care. <HeartDoodle className="h-3.5 w-3.5 text-pink" />
+          </p>
+        </div>
+      </div>
+    </footer>
+  )
+}
