@@ -22,7 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Local design reference material (not used by the app)
-src/assets/untitled folder/
-src/assets/stitch_craving_manager_asset_library*/
