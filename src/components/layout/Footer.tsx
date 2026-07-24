@@ -11,9 +11,9 @@ import {
   WashiTape,
   StitchDivider,
   WhiskDoodle,
-  TopHatDoodle,
 } from '@/components/decor/Doodles'
 import { PageTab } from '@/components/decor/PageTab'
+import logo from '@/assets/logo-tophat.png'
 
 export function Footer() {
   return (
@@ -59,7 +59,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 pb-10">
           <div>
             <div className="flex items-center gap-2 justify-center sm:justify-start">
-              <TopHatDoodle className="h-6 w-6 text-cream -rotate-6" />
+              <img src={logo} alt={SITE_CONFIG.brandName} className="h-7 w-7 object-contain" />
               <span className="font-hand text-3xl text-cream">{SITE_CONFIG.brandName}</span>
             </div>
             <ScribbleUnderline className="h-2.5 w-24 text-coral mt-1 mx-auto sm:mx-0" />

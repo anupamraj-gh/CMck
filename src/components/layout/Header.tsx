@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { TopHatDoodle, ScribbleUnderline } from '@/components/decor/Doodles'
+import { ScribbleUnderline } from '@/components/decor/Doodles'
 import { useCartStore } from '@/store/cartStore'
 import { SITE_CONFIG, CONTENT } from '@/config/content'
+import logo from '@/assets/logo-tophat.png'
 
 export function Header() {
   const itemCount = useCartStore((s) => s.getItemCount())
@@ -18,7 +19,7 @@ export function Header() {
       <div className="mx-auto max-w-5xl rounded-full border-2 border-ink/10 bg-paper/80 craft-shadow backdrop-blur-lg">
         <div className="flex h-14 sm:h-16 items-center justify-between pl-4 pr-2 sm:pl-6 sm:pr-3">
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <TopHatDoodle className="h-6 w-6 sm:h-7 sm:w-7 text-ink -rotate-6 shrink-0" />
+            <img src={logo} alt={SITE_CONFIG.brandName} className="h-7 w-7 sm:h-8 sm:w-8 object-contain shrink-0" />
             <span className="font-hand text-2xl sm:text-3xl font-bold text-ink leading-none">
               {SITE_CONFIG.brandName}
             </span>

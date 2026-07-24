@@ -85,20 +85,6 @@ export function PaperClip(props: DoodleProps) {
   )
 }
 
-export function TopHatDoodle({ bandColor = 'var(--color-coral-deep)', ...props }: DoodleProps & { bandColor?: string }) {
-  return (
-    <svg viewBox="0 0 40 34" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <ellipse cx="20" cy="29" rx="17.5" ry="3" fill="currentColor" />
-      <path
-        d="M9.5 26.5h21V11c0-4.4-4.7-8-10.5-8s-10.5 3.6-10.5 8z"
-        fill="currentColor"
-      />
-      <path d="M13 6c-1.8 1.7-2.8 3.6-2.8 6" stroke="var(--color-paper)" strokeOpacity="0.35" strokeWidth="1.6" strokeLinecap="round" />
-      <rect x="9.5" y="20.5" width="21" height="4.5" fill={bandColor} />
-    </svg>
-  )
-}
-
 export function ChefHatDoodle(props: DoodleProps) {
   return (
     <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
