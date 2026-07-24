@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ComponentType, SVGProps } from 'react'
 import { motion } from 'framer-motion'
 import { Leaf, Heart, Award, Clock } from 'lucide-react'
 import { PaperCard } from '@/components/craft/PaperCard'
@@ -20,34 +20,26 @@ import {
   HandmadeStamp,
 } from '@/components/decor/Doodles'
 import { PageTab } from '@/components/decor/PageTab'
-import { SITE_CONFIG } from '@/config/site'
+import { SITE_CONFIG, CONTENT, fillTemplate } from '@/config/content'
 
-const features = [
-  {
-    icon: Leaf,
-    title: 'Fresh Ingredients',
-    description: 'Only the finest organic and locally-sourced ingredients make it into any dish.',
-    color: 'mint' as const,
-  },
-  {
-    icon: Heart,
-    title: 'Made with Love',
-    description: 'Each item is handcrafted in small batches to keep quality and taste premium.',
-    color: 'pink' as const,
-  },
-  {
-    icon: Award,
-    title: 'Transparent Process',
-    description: 'Watch our recipe videos and see exactly how your food comes together.',
-    color: 'butter' as const,
-  },
-  {
-    icon: Clock,
-    title: 'Fresh Delivery',
-    description: 'Made to order and delivered right at your preferred date and time slot.',
-    color: 'blue' as const,
-  },
-]
+const featureIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+  leaf: Leaf,
+  heart: Heart,
+  award: Award,
+  clock: Clock,
+}
+
+const doodleIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+  whisk: WhiskDoodle,
+  spoon: SpoonDoodle,
+  stamp: HandmadeStamp,
+}
+
+const about = CONTENT.about
+const whyChooseUs = CONTENT.whyChooseUs
+const testimonialsContent = CONTENT.testimonials
+const faqContent = CONTENT.faq
+const [faqHeadingLine1, faqHeadingLine2] = faqContent.heading.split('\n')
 
 export function AboutSection() {
   return (
@@ -62,20 +54,16 @@ export function AboutSection() {
             className="relative ruled-paper ruled-paper-margin craft-shadow-lg rounded-sm p-8 sm:p-10 pl-16 sm:pl-20"
           >
             <NotebookHoles count={6} className="absolute left-4 sm:left-6 top-10 bottom-10" />
-            <PageTab label="THE STORY · Pg. 03" rotate={2} className="mb-4" />
-            <p className="font-hand text-2xl text-coral-deep mb-1">a page from our journal</p>
+            <PageTab label={about.pageLabel} rotate={2} className="mb-4" />
+            <p className="font-hand text-2xl text-coral-deep mb-1">{about.kicker}</p>
             <h2 className="font-serif text-3xl sm:text-4xl font-bold text-ink mb-5">
-              Where Passion Meets Plate
+              {about.title}
             </h2>
-            <p className="text-ink-soft leading-loose mb-4">
-              {SITE_CONFIG.brandName} was born from a simple belief: food should be an experience,
-              not just a transaction. We invite you to watch how each dish comes to life, understand
-              every ingredient, and personalize your order exactly the way you love it.
-            </p>
-            <p className="text-ink-soft leading-loose">
-              From our artisan cakes to protein-packed bars, every item on our curated menu is a
-              little handwritten note of quality, transparency, and the joy of great food.
-            </p>
+            {about.paragraphs.map((paragraph, i) => (
+              <p key={i} className={`text-ink-soft leading-loose ${i === 0 ? 'mb-4' : ''}`}>
+                {fillTemplate(paragraph, { brandName: SITE_CONFIG.brandName })}
+              </p>
+            ))}
             <CoffeeStain className="absolute -bottom-8 -left-6 h-20 w-20 text-coral-deep/25 hidden sm:block" />
             <StarDoodle className="absolute bottom-6 right-6 h-6 w-6 text-butter-deep animate-wiggle" />
             <RollingPinDoodle className="absolute top-6 right-6 h-4 w-10 text-ink-faint/50 -rotate-12 hidden sm:block" />
@@ -89,24 +77,27 @@ export function AboutSection() {
             >
               <ArrowDoodle className="h-8 w-14 -scale-x-100 text-ink-faint rotate-[100deg] shrink-0 -mt-2" />
               <span className="font-hand text-lg leading-tight text-ink-soft rotate-[-4deg]">
-                small batches, every time
+                {about.sideNote}
               </span>
             </motion.div>
           </motion.div>
 
           <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-5 pt-4 lg:pl-6">
-            {features.map((feature, i) => (
-              <StickyNote
-                key={feature.title}
-                color={feature.color}
-                rotate={i % 2 === 0 ? -3 : 3}
-                className={`min-h-[180px] flex flex-col ${i === 1 ? 'sm:mt-8' : ''} ${i === 2 ? 'sm:-mt-4' : ''} ${i === 3 ? 'sm:mt-4' : ''}`}
-              >
-                <feature.icon className="h-7 w-7 text-ink mb-3" strokeWidth={2} />
-                <h3 className="font-serif text-lg font-semibold text-ink mb-1.5">{feature.title}</h3>
-                <p className="text-sm text-ink/70 leading-snug">{feature.description}</p>
-              </StickyNote>
-            ))}
+            {about.features.map((feature, i) => {
+              const Icon = featureIcons[feature.icon]
+              return (
+                <StickyNote
+                  key={feature.title}
+                  color={feature.color as 'mint' | 'pink' | 'butter' | 'blue'}
+                  rotate={i % 2 === 0 ? -3 : 3}
+                  className={`min-h-[180px] flex flex-col ${i === 1 ? 'sm:mt-8' : ''} ${i === 2 ? 'sm:-mt-4' : ''} ${i === 3 ? 'sm:mt-4' : ''}`}
+                >
+                  <Icon className="h-7 w-7 text-ink mb-3" strokeWidth={2} />
+                  <h3 className="font-serif text-lg font-semibold text-ink mb-1.5">{feature.title}</h3>
+                  <p className="text-sm text-ink/70 leading-snug">{feature.description}</p>
+                </StickyNote>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -115,44 +106,7 @@ export function AboutSection() {
 }
 
 export function WhyChooseUs() {
-  const stats = [
-    {
-      type: 'tag' as const,
-      stat: '500+',
-      label: 'Happy Customers',
-      color: 'var(--color-coral)',
-      size: 'h-36 w-32 sm:h-40 sm:w-36',
-      stringLen: 18,
-      overlap: '',
-    },
-    {
-      type: 'seal' as const,
-      stat: '5',
-      label: 'Star Rated Kitchen',
-      color: 'var(--color-mint-deep)',
-      size: 'h-36 w-36 sm:h-40 sm:w-40',
-      stringLen: 0,
-      overlap: 'sm:-ml-4',
-    },
-    {
-      type: 'tag' as const,
-      stat: '100%',
-      label: 'Hygienic Kitchen',
-      color: 'var(--color-butter)',
-      size: 'h-36 w-32 sm:h-40 sm:w-36',
-      stringLen: 38,
-      overlap: '',
-    },
-    {
-      type: 'seal' as const,
-      stat: null,
-      label: 'Quality Chef Approved',
-      color: 'var(--color-purple-deep)',
-      size: 'h-32 w-32 sm:h-36 sm:w-36',
-      stringLen: 0,
-      overlap: 'sm:-ml-3',
-    },
-  ]
+  const stats = whyChooseUs.stats
 
   return (
     <section className="relative py-16 sm:py-24 bg-purple-deep/50 overflow-hidden">
@@ -163,9 +117,11 @@ export function WhyChooseUs() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <PageTab label="THE PROOF · Pg. 04" rotate={-2} className="mb-5" />
-          <p className="font-hand text-2xl text-ink/70 mb-1">pinned up around the kitchen</p>
-          <h2 className="font-serif text-4xl font-bold text-ink mb-16 sm:mb-20">The {SITE_CONFIG.brandName} Difference</h2>
+          <PageTab label={whyChooseUs.pageLabel} rotate={-2} className="mb-5" />
+          <p className="font-hand text-2xl text-ink/70 mb-1">{whyChooseUs.kicker}</p>
+          <h2 className="font-serif text-4xl font-bold text-ink mb-16 sm:mb-20">
+            {fillTemplate(whyChooseUs.titleTemplate, { brandName: SITE_CONFIG.brandName })}
+          </h2>
         </motion.div>
 
         <div className="relative max-w-3xl mx-auto pt-6">
@@ -226,44 +182,7 @@ export function WhyChooseUs() {
 }
 
 export function Testimonials() {
-  const testimonials = [
-    {
-      name: 'Priya Sharma',
-      date: '12 May 2024',
-      text: 'Dear Craving Manager, the best food we’ve had! Every dish feels like it’s made with so much love and care.',
-      rating: 5,
-      tape: 'var(--color-pink)',
-      doodle: 'whisk' as const,
-      offset: '',
-      tone: 'cream' as const,
-      imperfection: 'fold' as const,
-      ink: 'text-ink',
-    },
-    {
-      name: 'Rohit Mehta',
-      date: '20 May 2024',
-      text: 'Craving Manager has become our go-to for every office craving. Always fresh, always on time!',
-      rating: 5,
-      tape: 'var(--color-mint)',
-      doodle: 'spoon' as const,
-      offset: 'md:-translate-y-6',
-      tone: 'paper' as const,
-      imperfection: 'stain' as const,
-      ink: 'text-ink/80',
-    },
-    {
-      name: 'Ananya Patel',
-      date: '28 May 2024',
-      text: 'The gourmet burgers arrived hot and fresh. The attention to detail is next level!',
-      rating: 5,
-      tape: null,
-      doodle: 'stamp' as const,
-      offset: 'md:translate-y-4',
-      tone: 'cream' as const,
-      imperfection: 'torn' as const,
-      ink: 'text-ink/90',
-    },
-  ]
+  const testimonials = testimonialsContent.items
 
   return (
     <section className="relative py-24 sm:py-32 scroll-mt-24">
@@ -274,56 +193,57 @@ export function Testimonials() {
           viewport={{ once: true }}
           className="text-center mb-20"
         >
-          <PageTab label="THE NOTES · Pg. 05" rotate={2} className="mb-4" />
-          <p className="font-hand text-2xl text-coral-deep mb-1">letters from happy tables</p>
-          <h2 className="font-serif text-4xl font-bold text-ink">What Our Customers Say</h2>
+          <PageTab label={testimonialsContent.pageLabel} rotate={2} className="mb-4" />
+          <p className="font-hand text-2xl text-coral-deep mb-1">{testimonialsContent.kicker}</p>
+          <h2 className="font-serif text-4xl font-bold text-ink">{testimonialsContent.title}</h2>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-16">
-          {testimonials.map((t, i) => (
-            <PaperCard
-              key={t.name}
-              tone={t.tone}
-              rotate={i % 2 === 0 ? -2 : 2}
-              wobble={((i % 4) + 1) as 1 | 2 | 3 | 4}
-              fold={t.imperfection === 'fold'}
-              className={`ruled-paper p-7 pt-9 pl-9 relative overflow-hidden ${t.imperfection === 'torn' ? 'deckle-bottom' : ''} ${t.offset}`}
-              style={t.imperfection === 'torn' ? ({ '--deckle-bg': 'var(--color-lavender)' } as CSSProperties) : undefined}
-            >
-              <NotebookHoles count={4} className="absolute left-2.5 top-8 bottom-8" />
-              {t.imperfection === 'stain' && (
-                <CoffeeStain className="absolute -bottom-4 -right-6 h-20 w-20 text-ink-faint/25 pointer-events-none" />
-              )}
+          {testimonials.map((t, i) => {
+            const Doodle = doodleIcons[t.doodle]
+            return (
+              <PaperCard
+                key={t.name}
+                tone={t.tone as 'cream' | 'paper'}
+                rotate={i % 2 === 0 ? -2 : 2}
+                wobble={((i % 4) + 1) as 1 | 2 | 3 | 4}
+                fold={t.imperfection === 'fold'}
+                className={`ruled-paper p-7 pt-9 pl-9 relative overflow-hidden ${t.imperfection === 'torn' ? 'deckle-bottom' : ''} ${t.offset}`}
+                style={t.imperfection === 'torn' ? ({ '--deckle-bg': 'var(--color-lavender)' } as CSSProperties) : undefined}
+              >
+                <NotebookHoles count={4} className="absolute left-2.5 top-8 bottom-8" />
+                {t.imperfection === 'stain' && (
+                  <CoffeeStain className="absolute -bottom-4 -right-6 h-20 w-20 text-ink-faint/25 pointer-events-none" />
+                )}
 
-              {t.tape ? (
-                <WashiTape
-                  className="left-8 -top-3"
-                  color={t.tape}
-                  rotate={i % 2 === 0 ? -6 : 6}
-                  width={72}
-                />
-              ) : (
-                <span className="absolute bottom-4 left-8 h-9 w-9 rounded-full border-2 border-dashed border-ink-faint/50 flex items-center justify-center text-ink-faint">
-                  <span className="font-mono text-[8px] font-bold">CM</span>
-                </span>
-              )}
+                {t.tape ? (
+                  <WashiTape
+                    className="left-8 -top-3"
+                    color={t.tape}
+                    rotate={i % 2 === 0 ? -6 : 6}
+                    width={72}
+                  />
+                ) : (
+                  <span className="absolute bottom-4 left-8 h-9 w-9 rounded-full border-2 border-dashed border-ink-faint/50 flex items-center justify-center text-ink-faint">
+                    <span className="font-mono text-[8px] font-bold">CM</span>
+                  </span>
+                )}
 
-              <HeartDoodle className="absolute top-5 right-5 h-5 w-5 text-coral-deep/70" />
+                <HeartDoodle className="absolute top-5 right-5 h-5 w-5 text-coral-deep/70" />
 
-              {t.doodle === 'whisk' && <WhiskDoodle className="absolute bottom-5 right-5 h-10 w-6 text-ink-faint/40" />}
-              {t.doodle === 'spoon' && <SpoonDoodle className="absolute bottom-5 right-5 h-9 w-5 text-ink-faint/40" />}
-              {t.doodle === 'stamp' && <HandmadeStamp className="absolute bottom-4 right-4 h-12 w-12 text-ink-faint/40" />}
+                {Doodle && <Doodle className="absolute bottom-5 right-5 h-10 w-6 text-ink-faint/40" />}
 
-              <div className="flex items-center gap-1 mb-4 mt-2">
-                {Array.from({ length: t.rating }).map((_, j) => (
-                  <span key={j} className="text-butter-deep text-lg leading-none">★</span>
-                ))}
-              </div>
-              <p className={`font-hand text-2xl leading-snug mb-8 ${t.ink}`}>&ldquo;{t.text}&rdquo;</p>
-              <p className="text-sm font-bold text-ink-soft">— {t.name}</p>
-              <p className="font-mono text-[10px] text-ink-faint mt-1">{t.date}</p>
-            </PaperCard>
-          ))}
+                <div className="flex items-center gap-1 mb-4 mt-2">
+                  {Array.from({ length: t.rating }).map((_, j) => (
+                    <span key={j} className="text-butter-deep text-lg leading-none">★</span>
+                  ))}
+                </div>
+                <p className={`font-hand text-2xl leading-snug mb-8 ${t.ink}`}>&ldquo;{t.text}&rdquo;</p>
+                <p className="text-sm font-bold text-ink-soft">— {t.name}</p>
+                <p className="font-mono text-[10px] text-ink-faint mt-1">{t.date}</p>
+              </PaperCard>
+            )
+          })}
         </div>
       </div>
     </section>
@@ -331,28 +251,7 @@ export function Testimonials() {
 }
 
 export function FAQSection() {
-  const faqs = [
-    {
-      q: 'How does WhatsApp checkout work?',
-      a: 'After filling your delivery details and clicking Pay Now, we generate an invoice and open WhatsApp with your complete order summary. Simply tap Send to place your order.',
-      tab: 'mint' as const,
-    },
-    {
-      q: 'Can I customize my order?',
-      a: 'Absolutely! Each product page has detailed customization options — flavors, toppings, sizes, and more. Prices update in real-time as you select.',
-      tab: 'pink' as const,
-    },
-    {
-      q: 'What are the delivery charges?',
-      a: 'A flat delivery fee applies on orders below ₹999. Orders above ₹999 enjoy free delivery.',
-      tab: 'butter' as const,
-    },
-    {
-      q: 'How fresh is the food?',
-      a: 'Everything is made to order. We prepare your items fresh and deliver them at your preferred date and time slot.',
-      tab: 'blue' as const,
-    },
-  ]
+  const faqs = faqContent.items
 
   return (
     <section id="faq" className="relative py-20 sm:py-28 scroll-mt-24">
@@ -363,8 +262,8 @@ export function FAQSection() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <PageTab label="THE INDEX · Pg. 06" rotate={-2} className="mb-4" />
-          <p className="font-hand text-2xl text-coral-deep mb-1">quick answers, before you order</p>
+          <PageTab label={faqContent.pageLabel} rotate={-2} className="mb-4" />
+          <p className="font-hand text-2xl text-coral-deep mb-1">{faqContent.kicker}</p>
         </motion.div>
 
         <PaperStack>
@@ -373,9 +272,9 @@ export function FAQSection() {
 
           <div className="relative bg-purple/60 ruled-paper lg:w-2/5 p-8 sm:p-10 pl-10 lg:pl-12 flex flex-col justify-between min-h-[220px] lg:min-h-[420px]">
             <h2 className="font-hand text-4xl sm:text-5xl text-ink leading-[1.05]">
-              Before You Place
+              {faqHeadingLine1}
               <br />
-              Your Craving
+              {faqHeadingLine2}
             </h2>
             <div className="flex items-end gap-5 mt-8">
               <SpoonDoodle className="h-14 w-8 text-ink-soft/60" />

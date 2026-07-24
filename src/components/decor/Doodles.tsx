@@ -71,25 +71,6 @@ export function ScribbleUnderline(props: DoodleProps) {
   )
 }
 
-export function CurvedArrowDown(props: DoodleProps) {
-  return (
-    <svg viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <path
-        d="M30 4c-10 20-14 42-6 74"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 62c3 7 8 13 12 16M36 62c-3 7-8 13-12 16"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
 export function PaperClip(props: DoodleProps) {
   return (
     <svg viewBox="0 0 30 60" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -100,16 +81,6 @@ export function PaperClip(props: DoodleProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-    </svg>
-  )
-}
-
-export function Pin(props: DoodleProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <circle cx="12" cy="9" r="6.5" fill="currentColor" />
-      <circle cx="9.5" cy="6.8" r="1.6" fill="white" fillOpacity="0.6" />
-      <path d="M12 15.5 12 22" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   )
 }
@@ -167,22 +138,6 @@ export function CheckboxDoodle(props: DoodleProps) {
     <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <rect x="1.5" y="1.5" width="17" height="17" rx="4" stroke="currentColor" strokeWidth="1.8" />
       <path d="M5.5 10.5l3 3 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-export function FlourDustDoodle(props: DoodleProps) {
-  return (
-    <svg viewBox="0 0 40 40" fill="currentColor" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <circle cx="6" cy="10" r="1.4" />
-      <circle cx="14" cy="4" r="1" />
-      <circle cx="20" cy="14" r="1.8" />
-      <circle cx="10" cy="20" r="1" />
-      <circle cx="28" cy="8" r="1.3" />
-      <circle cx="33" cy="18" r="1" />
-      <circle cx="24" cy="24" r="1.5" />
-      <circle cx="4" cy="28" r="1" />
-      <circle cx="16" cy="30" r="1.2" />
     </svg>
   )
 }

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem, CustomerInfo, DeliveryInfo, SelectedCustomization } from '@/types'
-import { SITE_CONFIG } from '@/config/site'
+import { SITE_CONFIG } from '@/config/content'
 
 interface CartState {
   items: CartItem[]

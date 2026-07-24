@@ -13,10 +13,11 @@ import {
 } from '@/components/decor/Doodles'
 import { FloatingDoodle } from '@/components/craft/FloatingDoodle'
 import { PageTab } from '@/components/decor/PageTab'
-import { SITE_CONFIG } from '@/config/site'
+import { SITE_CONFIG, CONTENT } from '@/config/content'
 import { products } from '@/data/products'
 
-const todaysSpecial = ['Freshly Cooked', 'Premium Ingredients', 'On-Time Delivery', 'Hygienic Kitchen']
+const hero = CONTENT.hero
+const [headlineLine1, headlineHighlight] = hero.headline.split('\n')
 
 export function HeroSection() {
   const heroProduct = products[0]
@@ -44,15 +45,14 @@ export function HeroSection() {
               className="text-center lg:text-left relative"
             >
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-butter/60 border-2 border-ink/10 craft-shadow-sm -rotate-2 mb-6">
-                <span className="font-hand text-sm text-ink">chef&apos;s note: made fresh, never frozen ✓</span>
+                <span className="font-hand text-sm text-ink">{hero.badgeText}</span>
               </div>
 
               <h1 className="font-hand text-5xl sm:text-6xl lg:text-7xl font-bold text-ink leading-[0.98] mb-4">
-                Where Every Craving
+                {headlineLine1}
                 <br />
-                Finds Its{' '}
                 <span className="relative inline-block text-coral-deep">
-                  Perfect Match.
+                  {headlineHighlight}
                   <SparkleDoodle className="absolute -top-3 -right-8 h-6 w-6 text-butter-deep animate-sparkle hidden sm:block" />
                 </span>
               </h1>
@@ -67,7 +67,7 @@ export function HeroSection() {
                 transition={{ delay: 0.6, duration: 0.5 }}
                 className="inline-flex flex-col gap-1.5 bg-butter/70 border border-ink/10 rounded-md px-4 py-3 tape-shadow mb-8 mx-auto lg:mx-0"
               >
-                {todaysSpecial.map((item) => (
+                {hero.todaysSpecial.map((item) => (
                   <span key={item} className="flex items-center gap-2 font-hand text-base leading-none text-ink">
                     <CheckboxDoodle className="h-4 w-4 text-mint-deep shrink-0" />
                     {item}
@@ -77,20 +77,20 @@ export function HeroSection() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
                 <Button variant="coral" size="lg" className="rotate-[-1deg]" asChild>
-                  <a href="#menu">Order Now</a>
+                  <a href="#menu">{hero.ctaPrimaryLabel}</a>
                 </Button>
                 <Button variant="outline" size="lg" className="rotate-[1deg]" asChild>
-                  <a href="#menu">Explore Menu</a>
+                  <a href="#menu">{hero.ctaSecondaryLabel}</a>
                 </Button>
               </div>
 
               <p className="font-hand text-lg text-ink-soft flex items-center gap-1 justify-center lg:justify-start">
-                <span className="text-ink-faint">·</span> made for food lovers <HeartDoodle className="h-3.5 w-3.5 text-coral-deep" />
+                <span className="text-ink-faint">·</span> {hero.footnote} <HeartDoodle className="h-3.5 w-3.5 text-coral-deep" />
               </p>
             </motion.div>
 
             <div className="absolute -bottom-4 right-6 lg:right-10">
-              <PageTab label="Page 01" rotate={3} tone="paper" />
+              <PageTab label={hero.pageLabel} rotate={3} tone="paper" />
             </div>
           </div>
           </PaperStack>
@@ -115,8 +115,8 @@ export function HeroSection() {
                 transition={{ delay: 0.5, type: 'spring', stiffness: 180, damping: 14 }}
                 className="absolute top-6 -right-4 sm:-right-6 h-16 w-16 rounded-full bg-mint border-2 border-paper craft-shadow flex flex-col items-center justify-center text-center"
               >
-                <span className="font-hand text-sm leading-none text-ink">Chef&apos;s</span>
-                <span className="font-hand text-sm leading-none text-ink">Pick ♡</span>
+                <span className="font-hand text-sm leading-none text-ink">{hero.pickBadgeLine1}</span>
+                <span className="font-hand text-sm leading-none text-ink">{hero.pickBadgeLine2}</span>
               </motion.div>
 
               <svg
@@ -132,8 +132,8 @@ export function HeroSection() {
                 transition={{ delay: 0.7, type: 'spring', stiffness: 180, damping: 14 }}
                 className="absolute -bottom-9 -left-8 h-20 w-20 rounded-full bg-butter border-2 border-ink/10 craft-shadow flex flex-col items-center justify-center text-center"
               >
-                <span className="font-hand text-base leading-none text-ink">Lovingly</span>
-                <span className="font-hand text-base leading-none text-ink">Made ♡</span>
+                <span className="font-hand text-base leading-none text-ink">{hero.madeBadgeLine1}</span>
+                <span className="font-hand text-base leading-none text-ink">{hero.madeBadgeLine2}</span>
               </motion.div>
 
               <div

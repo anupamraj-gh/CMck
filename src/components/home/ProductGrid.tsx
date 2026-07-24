@@ -3,6 +3,9 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Star } from 'lucide-react'
 import { products, getProductById } from '@/data/products'
 import { formatCurrency } from '@/lib/utils'
+import { CONTENT } from '@/config/content'
+
+const productGridContent = CONTENT.productGrid
 import { WashiTape, ScribbleUnderline, SparkleDoodle, NotebookHoles, HeartDoodle } from '@/components/decor/Doodles'
 import { PageTab } from '@/components/decor/PageTab'
 import { StickyNote } from '@/components/craft/StickyNote'
@@ -171,7 +174,7 @@ function RecipeCard({ product, index, rotate, bestseller = false, compact = fals
 
 export function ProductGrid() {
   const [featured, ...rest] = products
-  const chefsRecommendation = getProductById('cookie-collection')
+  const chefsRecommendation = getProductById(productGridContent.chefsRecommendationId)
 
   return (
     <section id="menu" className="relative py-28 sm:py-36 scroll-mt-24 overflow-hidden">
@@ -189,15 +192,14 @@ export function ProductGrid() {
           viewport={{ once: true }}
           className="mb-16 max-w-xl"
         >
-          <PageTab label="THE MENU · Pg. 02" rotate={-2} className="mb-4" />
-          <p className="font-hand text-2xl text-coral-deep mb-1">our signature collection</p>
+          <PageTab label={productGridContent.pageLabel} rotate={-2} className="mb-4" />
+          <p className="font-hand text-2xl text-coral-deep mb-1">{productGridContent.kicker}</p>
           <h2 className="font-serif text-4xl sm:text-5xl font-bold text-ink mb-3">
-            The Curated Menu
+            {productGridContent.title}
           </h2>
           <ScribbleUnderline className="h-3 w-40 text-butter-deep mb-4" />
           <p className="text-ink-soft">
-            Five handcrafted masterpieces, pinned up just for you. Watch the recipe, customize your
-            order, and taste the difference.
+            {productGridContent.description}
           </p>
         </motion.div>
 
@@ -239,7 +241,7 @@ export function ProductGrid() {
                     Try our {chefsRecommendation.name}
                   </p>
                   <p className="text-sm text-ink/70 flex items-center gap-1.5">
-                    — made fresh daily! <HeartDoodle className="h-3.5 w-3.5 text-coral-deep shrink-0" />
+                    — {productGridContent.chefsRecommendationNote} <HeartDoodle className="h-3.5 w-3.5 text-coral-deep shrink-0" />
                   </p>
                 </StickyNote>
               </Link>

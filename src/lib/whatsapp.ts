@@ -1,6 +1,6 @@
 import type { Order } from '@/types'
 import { formatCurrency } from '@/lib/utils'
-import { SITE_CONFIG } from '@/config/site'
+import { SITE_CONFIG } from '@/config/content'
 
 export function buildWhatsAppMessage(order: Order): string {
   const lines: string[] = [

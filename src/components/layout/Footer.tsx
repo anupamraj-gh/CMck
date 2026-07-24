@@ -1,7 +1,9 @@
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { MessageCircle, Mail, Camera } from 'lucide-react'
-import { SITE_CONFIG } from '@/config/site'
+import { SITE_CONFIG, CONTENT } from '@/config/content'
+
+const footer = CONTENT.footer
 import {
   StarDoodle,
   HeartDoodle,
@@ -34,15 +36,15 @@ export function Footer() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="flex justify-center mb-8">
-          <PageTab label="THE LAST PAGE · Pg. 07" rotate={-2} tone="paper" />
+          <PageTab label={footer.pageLabel} rotate={-2} tone="paper" />
         </div>
 
         <div className="text-center mb-14">
           <WhiskDoodle className="h-9 w-5 text-cream/30 mx-auto mb-3 rotate-12" />
           <p className="font-hand text-3xl sm:text-4xl text-butter mb-3 leading-snug max-w-xl mx-auto">
-            Thank you for letting us manage your cravings.
+            {footer.thankYouLines[0]}
             <br />
-            See you on your next order!
+            {footer.thankYouLines[1]}
           </p>
           <p className="text-cream/55 text-sm max-w-md mx-auto mb-3">
             {SITE_CONFIG.tagline} — every dish tells a story, every ingredient matters.
@@ -62,7 +64,7 @@ export function Footer() {
             </div>
             <ScribbleUnderline className="h-2.5 w-24 text-coral mt-1 mx-auto sm:mx-0" />
             <p className="text-cream/55 text-sm leading-relaxed mt-3">
-              A handwritten little kitchen journal — watch it made, make it yours, get it delivered.
+              {footer.aboutBlurb}
             </p>
           </div>
 
@@ -71,9 +73,11 @@ export function Footer() {
               Quick Links
             </h4>
             <ul className="space-y-2.5 text-sm text-cream/60">
-              <li><a href="/#menu" className="hover:text-butter transition-colors">Our Menu</a></li>
-              <li><a href="/#about" className="hover:text-butter transition-colors">About Us</a></li>
-              <li><a href="/#faq" className="hover:text-butter transition-colors">FAQ</a></li>
+              {footer.quickLinks.map((link) => (
+                <li key={link.href}>
+                  <a href={link.href} className="hover:text-butter transition-colors">{link.label}</a>
+                </li>
+              ))}
               <li><a href={`mailto:${SITE_CONFIG.supportEmail}`} className="hover:text-butter transition-colors">Contact</a></li>
               <li><Link to="/checkout" className="hover:text-butter transition-colors">Checkout</Link></li>
             </ul>
@@ -113,7 +117,7 @@ export function Footer() {
               className="relative inline-block bg-purple/90 text-ink font-hand text-base px-4 py-3 rotate-[-3deg] tape-shadow max-w-[11rem]"
               style={{ clipPath: 'polygon(2% 8%, 40% 0%, 78% 4%, 100% 14%, 96% 88%, 60% 100%, 15% 94%, 0% 80%)' }}
             >
-              Made with love in our kitchen. <HeartDoodle className="h-3.5 w-3.5 text-coral-deep inline shrink-0" />
+              {footer.socialNote} <HeartDoodle className="h-3.5 w-3.5 text-coral-deep inline shrink-0" />
             </div>
           </div>
         </div>
@@ -125,7 +129,7 @@ export function Footer() {
             © {new Date().getFullYear()} {SITE_CONFIG.brandName}. All rights reserved.
           </p>
           <p className="text-xs text-cream/40 flex items-center gap-1.5">
-            Cooked with love, delivered with care. <HeartDoodle className="h-3.5 w-3.5 text-pink" />
+            {footer.bottomNote} <HeartDoodle className="h-3.5 w-3.5 text-pink" />
           </p>
         </div>
       </div>

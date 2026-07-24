@@ -5,18 +5,13 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { TopHatDoodle, ScribbleUnderline } from '@/components/decor/Doodles'
 import { useCartStore } from '@/store/cartStore'
-import { SITE_CONFIG } from '@/config/site'
+import { SITE_CONFIG, CONTENT } from '@/config/content'
 
 export function Header() {
   const itemCount = useCartStore((s) => s.getItemCount())
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/#menu', label: 'Menu' },
-    { to: '/#about', label: 'About' },
-    { to: '/#faq', label: 'FAQ' },
-  ]
+  const navLinks = CONTENT.nav.links
 
   return (
     <header className="fixed top-3 left-0 right-0 z-50 px-3 sm:top-4 sm:px-6">

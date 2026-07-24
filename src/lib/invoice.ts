@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf'
 import type { Order } from '@/types'
 import { formatCurrency } from '@/lib/utils'
-import { SITE_CONFIG } from '@/config/site'
+import { SITE_CONFIG } from '@/config/content'
 
 export function generateInvoicePdf(order: Order): jsPDF {
   const doc = new jsPDF()

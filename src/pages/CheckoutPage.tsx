@@ -20,7 +20,7 @@ import { useCartStore } from '@/store/cartStore'
 import { formatCurrency, generateOrderId } from '@/lib/utils'
 import { downloadInvoice } from '@/lib/invoice'
 import { redirectToWhatsApp } from '@/lib/whatsapp'
-import { DELIVERY_TIME_SLOTS, SITE_CONFIG } from '@/config/site'
+import { DELIVERY_TIME_SLOTS, SITE_CONFIG } from '@/config/content'
 import type { CustomerInfo, Order } from '@/types'
 
 export function CheckoutPage() {
