@@ -1,12 +1,25 @@
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowRight, Star } from 'lucide-react'
+import { useMemo, useState, useEffect, useRef } from 'react'
+import type { MouseEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowRight, Star, Plus, Check } from 'lucide-react'
 import { products, getProductById } from '@/data/products'
 import { formatCurrency } from '@/lib/utils'
 import { CONTENT } from '@/config/content'
+import {
+  useCartStore,
+  buildDefaultSelections,
+  selectionsToCustomizations,
+  calculateUnitPrice,
+  needsCustomization,
+} from '@/store/cartStore'
+import { useLaunchFlight } from '@/hooks/useLaunchFlight'
+import { triggerHaptic } from '@/lib/haptics'
+import { useBumpOnIncrease } from '@/hooks/useBumpOnIncrease'
+import { useProductCartQuantity } from '@/hooks/useProductCartQuantity'
 
 const productGridContent = CONTENT.productGrid
-import { WashiTape, ScribbleUnderline, SparkleDoodle, NotebookHoles, HeartDoodle } from '@/components/decor/Doodles'
+import { WashiTape, ScribbleUnderline, NotebookHoles, HeartDoodle } from '@/components/decor/Doodles'
 import { PageTab } from '@/components/decor/PageTab'
 import { StickyNote } from '@/components/craft/StickyNote'
 import { PaperStack } from '@/components/craft/PaperStack'
@@ -38,6 +51,9 @@ function RatingRow({ rating, reviewCount, size = 'sm' }: { rating: number; revie
 }
 
 function PriceBadge({ product, rotate, index }: { product: (typeof products)[number]; rotate: number; index: number }) {
+  const cartQuantity = useProductCartQuantity(product.id)
+  const wiggleKey = useBumpOnIncrease(cartQuantity)
+
   return (
     <motion.div
       initial={{ scale: 0, rotate: -20 }}
@@ -46,13 +62,207 @@ function PriceBadge({ product, rotate, index }: { product: (typeof products)[num
       transition={{ delay: 0.3 + (index % 3) * 0.08, type: 'spring', stiffness: 220, damping: 12 }}
       className="absolute -bottom-4 -right-3 h-16 w-16 rounded-full bg-coral text-paper flex flex-col items-center justify-center border-2 border-paper craft-shadow text-center leading-none"
     >
-      <span className="text-[9px] font-bold uppercase tracking-wide opacity-80">from</span>
-      <span className="text-sm font-extrabold">{formatCurrency(product.basePrice)}</span>
+      <motion.span
+        key={wiggleKey}
+        animate={{ rotate: [0, -8, 7, -4, 0] }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="flex flex-col items-center"
+      >
+        <span className="text-[9px] font-bold uppercase tracking-wide opacity-80">from</span>
+        <span className="text-sm font-extrabold">{formatCurrency(product.basePrice)}</span>
+      </motion.span>
     </motion.div>
   )
 }
 
+function signatureOf(customizations: { groupId: string; optionId: string }[]): string {
+  return customizations.map((c) => `${c.groupId}:${c.optionId}`).join('|')
+}
+
+function QuickAddControl({
+  product,
+  compact = false,
+  fullLabel = false,
+}: {
+  product: (typeof products)[number]
+  compact?: boolean
+  fullLabel?: boolean
+}) {
+  const items = useCartStore((s) => s.items)
+  const addItem = useCartStore((s) => s.addItem)
+  const updateQuantity = useCartStore((s) => s.updateQuantity)
+  const removeItem = useCartStore((s) => s.removeItem)
+  const [justAdded, setJustAdded] = useState(false)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const addButtonRef = useRef<HTMLButtonElement>(null)
+  const launchFlight = useLaunchFlight()
+  const navigate = useNavigate()
+
+  useEffect(() => () => clearTimeout(timeoutRef.current), [])
+
+  const defaultCustomizations = useMemo(() => {
+    const selections = buildDefaultSelections(product.customizations)
+    return selectionsToCustomizations(product.customizations, selections)
+  }, [product])
+
+  const signature = useMemo(() => signatureOf(defaultCustomizations), [defaultCustomizations])
+  const requiresCustomizer = useMemo(() => needsCustomization(product.customizations), [product])
+
+  const existing = items.find(
+    (item) => item.productId === product.id && signatureOf(item.customizations) === signature,
+  )
+
+  const stop = (e: MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleAdd = (e: MouseEvent) => {
+    stop(e)
+    triggerHaptic()
+    if (existing) {
+      updateQuantity(existing.id, existing.quantity + 1)
+    } else if (requiresCustomizer) {
+      // Some required choice here has no safe default (e.g. "pick at least one" checkbox
+      // group) — never guess. Send them to the full customizer instead of instant-adding.
+      navigate(`/product/${product.id}`)
+      return
+    } else {
+      const unitPrice = calculateUnitPrice(product.basePrice, defaultCustomizations)
+      addItem({
+        productId: product.id,
+        productName: product.name,
+        productImage: product.image,
+        basePrice: product.basePrice,
+        quantity: 1,
+        customizations: defaultCustomizations,
+        unitPrice,
+      })
+      launchFlight(addButtonRef.current, product.image)
+    }
+    setJustAdded(true)
+    clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => setJustAdded(false), 1200)
+  }
+
+  const handleIncrement = (e: MouseEvent) => {
+    stop(e)
+    triggerHaptic()
+    if (existing) updateQuantity(existing.id, existing.quantity + 1)
+  }
+
+  const handleDecrement = (e: MouseEvent) => {
+    stop(e)
+    triggerHaptic()
+    if (!existing) return
+    if (existing.quantity <= 1) removeItem(existing.id)
+    else updateQuantity(existing.id, existing.quantity - 1)
+  }
+
+  if (product.available === false) {
+    return (
+      <span
+        aria-label={productGridContent.soldOutLabel}
+        className={`inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-ink-faint/25 bg-lavender/40 font-bold text-ink-faint craft-shadow-sm shrink-0 cursor-not-allowed ${
+          compact ? 'h-7 w-7 text-xs' : 'h-8 px-4 text-sm'
+        }`}
+      >
+        {compact ? '×' : productGridContent.soldOutLabel}
+      </span>
+    )
+  }
+
+  if (existing && !justAdded) {
+    return (
+      <div
+        onClick={stop}
+        className={`inline-flex items-center rounded-full border-2 border-ink/15 bg-paper craft-shadow-sm shrink-0 ${compact ? 'h-7 gap-1 px-1' : 'h-8 gap-2.5 px-1.5'}`}
+      >
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.85 }}
+          onClick={handleDecrement}
+          aria-label="Decrease quantity"
+          className={`rounded-full flex items-center justify-center text-ink font-bold hover:bg-purple/30 transition-colors ${compact ? 'h-5 w-5 text-xs' : 'h-6 w-6 text-sm'}`}
+        >
+          −
+        </motion.button>
+        <span className={`relative inline-grid place-items-center overflow-hidden text-center font-bold text-ink ${compact ? 'w-3 text-xs' : 'w-4 text-sm'}`}>
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={existing.quantity}
+              initial={{ opacity: 0, y: -8, scale: 0.7 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.7 }}
+              transition={{ duration: 0.15 }}
+              className="col-start-1 row-start-1"
+            >
+              {existing.quantity}
+            </motion.span>
+          </AnimatePresence>
+        </span>
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.85 }}
+          onClick={handleIncrement}
+          aria-label="Increase quantity"
+          className={`rounded-full flex items-center justify-center text-ink font-bold hover:bg-purple/30 transition-colors ${compact ? 'h-5 w-5 text-xs' : 'h-6 w-6 text-sm'}`}
+        >
+          +
+        </motion.button>
+      </div>
+    )
+  }
+
+  return (
+    <motion.button
+      ref={addButtonRef}
+      type="button"
+      whileTap={{ scale: 0.94 }}
+      onClick={handleAdd}
+      aria-label={compact ? productGridContent.addFullLabel : undefined}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-full bg-coral text-paper font-bold craft-shadow-sm hover:bg-coral-deep transition-colors overflow-hidden ${
+        compact ? 'h-7 w-7 shrink-0' : 'h-8 px-4 text-sm'
+      }`}
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        {justAdded ? (
+          <motion.span
+            key="added"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2 }}
+            className="inline-flex items-center gap-1.5"
+          >
+            <Check className={compact ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
+            {!compact && productGridContent.addedLabel}
+          </motion.span>
+        ) : (
+          <motion.span
+            key="add"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2 }}
+            className="inline-flex items-center gap-1.5"
+          >
+            <Plus className={compact ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
+            {!compact && (fullLabel ? productGridContent.addFullLabel : productGridContent.addLabel)}
+          </motion.span>
+        )}
+      </AnimatePresence>
+      <span className="sr-only" aria-live="polite">
+        {justAdded ? `${product.name} added to tray` : ''}
+      </span>
+    </motion.button>
+  )
+}
+
 function FeaturedCard({ product, index, rotate }: CardProps) {
+  const cartQuantity = useProductCartQuantity(product.id)
+  const compressKey = useBumpOnIncrease(cartQuantity)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 44, rotate: rotate - 6 }}
@@ -60,55 +270,65 @@ function FeaturedCard({ product, index, rotate }: CardProps) {
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.55, delay: 0, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ rotate: 0, y: -8, scale: 1.01 }}
-      className="relative"
+      className="relative group"
     >
-      <Link to={`/product/${product.id}`} className="group block">
-        <PaperStack>
-        <div className="relative bg-paper bg-grain p-5 sm:p-6 sm:pl-14 craft-shadow-lg rounded-sm border border-ink/10 lg:grid lg:grid-cols-[1fr_1.1fr] lg:gap-8 lg:items-center">
-          <NotebookHoles count={7} className="absolute left-4 sm:left-5 top-8 bottom-8 hidden sm:flex" />
-          <WashiTape className="left-1/2 -top-3.5 -translate-x-1/2 z-10" color="var(--color-mint)" rotate={-4} width={90} />
-          <span className="absolute -top-3 right-6 z-10 inline-block px-3.5 py-1.5 rounded-full bg-ink text-cream text-xs font-bold tracking-wide craft-shadow-sm rotate-3">
-            Chef&apos;s Special
-          </span>
+      <PaperStack>
+      <motion.div
+        key={compressKey}
+        animate={{ scale: [1, 0.98, 1] }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+        className="relative bg-paper bg-grain p-5 sm:p-6 sm:pl-14 craft-shadow-lg rounded-sm border border-ink/10 lg:grid lg:grid-cols-[1fr_1.1fr] lg:gap-8 lg:items-center">
+        <NotebookHoles count={7} className="absolute left-4 sm:left-5 top-8 bottom-8 hidden sm:flex" />
+        <WashiTape className="left-1/2 -top-3.5 -translate-x-1/2 z-10" color="var(--color-mint)" rotate={-4} width={90} />
+        <span className="absolute -top-3 right-6 z-10 inline-block px-3.5 py-1.5 rounded-full bg-ink text-cream text-xs font-bold tracking-wide craft-shadow-sm rotate-3">
+          Chef&apos;s Special
+        </span>
 
-          <div className="relative rounded-md border-2 border-dashed border-ink-faint/60 p-2 bg-lavender/40">
-            <div className="relative overflow-hidden rounded bg-lavender-deep aspect-[4/3]">
-              {product.image ? (
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-              ) : (
-                <PhotoPlaceholder />
-              )}
-            </div>
+        <Link to={`/product/${product.id}`} className="block relative rounded-md border-2 border-dashed border-ink-faint/60 p-2 bg-lavender/40">
+          <div className="relative overflow-hidden rounded bg-lavender-deep aspect-[4/3]">
+            {product.image ? (
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+            ) : (
+              <PhotoPlaceholder />
+            )}
           </div>
+        </Link>
 
-          <div className="pt-5 lg:pt-0 flex flex-col">
+        <div className="pt-5 lg:pt-0 flex flex-col">
+          <Link to={`/product/${product.id}`} className="block">
             <h3 className="font-serif font-semibold text-ink leading-snug group-hover:text-coral-deep transition-colors mb-1.5 text-2xl sm:text-3xl">
               {product.name}
             </h3>
-            <RatingRow rating={product.rating} reviewCount={product.reviewCount} size="lg" />
-            <p className="text-ink-soft mb-4 text-base leading-relaxed">{product.description}</p>
-            <div className="flex items-center justify-between mt-auto">
-              <span className="inline-flex items-center gap-1 text-sm font-bold text-ink group-hover:text-coral-deep transition-colors">
-                View &amp; Customize
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-              </span>
-              <SparkleDoodle className="h-3.5 w-3.5 text-butter-deep opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
+          </Link>
+          <RatingRow rating={product.rating} reviewCount={product.reviewCount} size="lg" />
+          <p className="text-ink-soft mb-4 text-base leading-relaxed">{product.description}</p>
+          <div className="flex items-center justify-between mt-auto gap-3 pr-14 sm:pr-0">
+            <QuickAddControl product={product} fullLabel />
+            <Link
+              to={`/product/${product.id}`}
+              className="text-sm font-bold text-ink-soft hover:text-coral-deep transition-colors inline-flex items-center gap-1 shrink-0"
+            >
+              {productGridContent.customizeLabel}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </div>
-        </PaperStack>
+      </motion.div>
+      </PaperStack>
 
-        <PriceBadge product={product} rotate={rotate} index={index} />
-      </Link>
+      <PriceBadge product={product} rotate={rotate} index={index} />
     </motion.div>
   )
 }
 
 function RecipeCard({ product, index, rotate, bestseller = false, compact = false }: CardProps) {
+  const cartQuantity = useProductCartQuantity(product.id)
+  const compressKey = useBumpOnIncrease(cartQuantity)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 44, rotate: rotate - 6 }}
@@ -116,58 +336,66 @@ function RecipeCard({ product, index, rotate, bestseller = false, compact = fals
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.55, delay: (index % 3) * 0.08, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ rotate: 0, y: -8, scale: 1.02 }}
-      className="relative h-full"
+      className="relative h-full group"
     >
-      <Link to={`/product/${product.id}`} className="group block h-full">
-        <div className="relative bg-paper bg-grain p-3 pb-4 craft-shadow-lg rounded-sm border border-ink/10 h-full flex flex-col overflow-hidden">
-          {bestseller && (
-            <div className="absolute -left-10 top-5 w-40 bg-coral text-paper text-[10px] font-bold uppercase tracking-wider text-center py-1 -rotate-45 z-10 craft-shadow-sm">
-              Bestseller
-            </div>
-          )}
-          <WashiTape
-            className="left-1/2 -top-3.5 -translate-x-1/2 z-10"
-            color={tapeColors[index % tapeColors.length]}
-            rotate={index % 2 === 0 ? -4 : 4}
-            width={76}
-          />
-
-          <div className="relative rounded-md border-2 border-dashed border-ink-faint/60 p-2 bg-lavender/40">
-            <div className={`relative overflow-hidden rounded bg-lavender-deep ${compact ? 'aspect-square' : 'aspect-[4/3]'}`}>
-              {product.image ? (
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-              ) : (
-                <PhotoPlaceholder />
-              )}
-            </div>
+      <motion.div
+        key={compressKey}
+        animate={{ scale: [1, 0.98, 1] }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+        className="relative bg-paper bg-grain p-3 pb-4 craft-shadow-lg rounded-sm border border-ink/10 h-full flex flex-col overflow-hidden"
+      >
+        {bestseller && (
+          <div className="absolute -left-10 top-5 w-40 bg-coral text-paper text-[10px] font-bold uppercase tracking-wider text-center py-1 -rotate-45 z-10 craft-shadow-sm">
+            Bestseller
           </div>
+        )}
+        <WashiTape
+          className="left-1/2 -top-3.5 -translate-x-1/2 z-10"
+          color={tapeColors[index % tapeColors.length]}
+          rotate={index % 2 === 0 ? -4 : 4}
+          width={76}
+        />
 
-          <span className="absolute top-2.5 left-2.5 z-10 h-7 w-7 rounded-full bg-ink text-cream text-xs font-bold flex items-center justify-center craft-shadow-sm">
-            0{index + 1}
-          </span>
+        <Link to={`/product/${product.id}`} className="block relative rounded-md border-2 border-dashed border-ink-faint/60 p-2 bg-lavender/40">
+          <div className={`relative overflow-hidden rounded bg-lavender-deep ${compact ? 'aspect-square' : 'aspect-[4/3]'}`}>
+            {product.image ? (
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+            ) : (
+              <PhotoPlaceholder />
+            )}
+          </div>
+        </Link>
 
-          <div className="pt-4 px-1 flex flex-col flex-1">
+        <span className="absolute top-2.5 left-2.5 z-10 h-7 w-7 rounded-full bg-ink text-cream text-xs font-bold flex items-center justify-center craft-shadow-sm">
+          0{index + 1}
+        </span>
+
+        <div className="pt-4 px-1 flex flex-col flex-1">
+          <Link to={`/product/${product.id}`} className="block">
             <h3 className={`font-serif font-semibold text-ink leading-snug group-hover:text-coral-deep transition-colors mb-1 ${compact ? 'text-base' : 'text-lg'}`}>
               {product.name}
             </h3>
-            <RatingRow rating={product.rating} reviewCount={product.reviewCount} />
-            {!compact && <p className="text-ink-soft mb-1 text-sm line-clamp-2">{product.shortDescription}</p>}
-            <div className="flex items-center justify-between mt-auto pt-3">
-              <span className="inline-flex items-center gap-1 text-sm font-bold text-ink group-hover:text-coral-deep transition-colors">
-                View &amp; Customize
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-              </span>
-              <SparkleDoodle className="h-3.5 w-3.5 text-butter-deep opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
+          </Link>
+          <RatingRow rating={product.rating} reviewCount={product.reviewCount} />
+          {!compact && <p className="text-ink-soft mb-1 text-sm line-clamp-2">{product.shortDescription}</p>}
+          <div className={`flex items-center justify-between mt-auto pt-3 gap-2 ${compact ? 'pr-9' : 'pr-14 sm:pr-0'}`}>
+            <QuickAddControl product={product} compact={compact} />
+            <Link
+              to={`/product/${product.id}`}
+              aria-label={compact ? productGridContent.customizeLabel : undefined}
+              className="text-xs font-bold text-ink-soft hover:text-coral-deep transition-colors inline-flex items-center gap-1 shrink-0"
+            >
+              {compact ? <ArrowRight className="h-3 w-3" /> : productGridContent.customizeLabel}
+            </Link>
           </div>
         </div>
+      </motion.div>
 
-        <PriceBadge product={product} rotate={rotate} index={index} />
-      </Link>
+      <PriceBadge product={product} rotate={rotate} index={index} />
     </motion.div>
   )
 }

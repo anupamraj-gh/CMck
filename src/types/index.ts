@@ -39,6 +39,8 @@ export interface Product {
   cookingInstructions: string[]
   servingSuggestions?: string
   customizations: CustomizationGroup[]
+  /** Defaults to true when omitted — only set false for a product that's genuinely unorderable. */
+  available?: boolean
 }
 
 export interface SelectedCustomization {

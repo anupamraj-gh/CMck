@@ -51,7 +51,12 @@
     "title": "The Curated Menu",
     "description": "Five handcrafted masterpieces, pinned up just for you. Watch the recipe, customize your order, and taste the difference.",
     "chefsRecommendationId": "cookie-collection",
-    "chefsRecommendationNote": "made fresh daily!"
+    "chefsRecommendationNote": "made fresh daily!",
+    "addLabel": "Add",
+    "addFullLabel": "Add to Kitchen Tray",
+    "addedLabel": "Added",
+    "customizeLabel": "Customize",
+    "soldOutLabel": "Sold Out"
   },
   "about": {
     "pageLabel": "THE STORY · Pg. 03",

@@ -103,6 +103,7 @@ export function ProductPage() {
       <OrderActions
         quantity={quantity}
         unitPrice={unitPrice}
+        productImage={product.image}
         onQuantityChange={setQuantity}
         onAddToCart={handleAddToCart}
       />

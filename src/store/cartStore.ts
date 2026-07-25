@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { CartItem, CustomerInfo, DeliveryInfo, SelectedCustomization } from '@/types'
+import type { CartItem, CustomerInfo, CustomizationGroup, DeliveryInfo, SelectedCustomization } from '@/types'
 import { SITE_CONFIG } from '@/config/content'
 
 interface CartState {
@@ -10,6 +10,7 @@ interface CartState {
   addItem: (item: Omit<CartItem, 'id' | 'totalPrice'>) => void
   removeItem: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
+  updateCustomizations: (id: string, customizations: SelectedCustomization[], unitPrice: number) => void
   clearCart: () => void
   setCustomer: (customer: CustomerInfo) => void
   setDelivery: (delivery: DeliveryInfo) => void
@@ -68,6 +69,16 @@ export const useCartStore = create<CartState>()(
         }))
       },
 
+      updateCustomizations: (id, customizations, unitPrice) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === id
+              ? { ...item, customizations, unitPrice, totalPrice: unitPrice * item.quantity }
+              : item,
+          ),
+        }))
+      },
+
       clearCart: () => set({ items: [], customer: emptyCustomer, delivery: emptyDelivery }),
 
       setCustomer: (customer) => set({ customer }),
@@ -99,6 +110,23 @@ export function calculateUnitPrice(
 ): number {
   const modifierSum = customizations.reduce((sum, c) => sum + c.priceModifier, 0)
   return Math.max(basePrice + modifierSum, 0)
+}
+
+/**
+ * Whether a product's required fields can be safely auto-filled with defaults, or whether it
+ * genuinely needs the full customizer. A required radio/select always has a sensible default
+ * (its first option) — the only case with no safe default is a *required* checkbox group
+ * (buildDefaultSelections leaves those empty, since "pick at least one" can't be guessed) or a
+ * required group that somehow has no options at all.
+ */
+export function needsCustomization(
+  groups: { id: string; label: string; type: string; required?: boolean; options: { id: string; label: string; priceModifier: number }[] }[],
+): boolean {
+  return groups.some((group) => {
+    if (!group.required) return false
+    if (group.type === 'checkbox') return true
+    return group.options.length === 0
+  })
 }
 
 export function buildDefaultSelections(
@@ -153,4 +181,22 @@ export function selectionsToCustomizations(
   }
 
   return result
+}
+
+/** Inverse of `selectionsToCustomizations` — rebuilds a selections record from a cart item's
+ * stored customizations, so an existing item's picks can pre-populate the edit form. */
+export function customizationsToSelections(
+  groups: CustomizationGroup[],
+  customizations: SelectedCustomization[],
+): Record<string, string | string[]> {
+  const selections: Record<string, string | string[]> = {}
+  for (const group of groups) {
+    const matches = customizations.filter((c) => c.groupId === group.id)
+    if (group.type === 'checkbox') {
+      selections[group.id] = matches.map((m) => m.optionId)
+    } else if (matches.length > 0) {
+      selections[group.id] = matches[0].optionId
+    }
+  }
+  return selections
 }

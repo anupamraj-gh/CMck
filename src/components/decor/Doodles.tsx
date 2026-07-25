@@ -262,3 +262,24 @@ export function NotebookHoles({ count = 5, className = '' }: { count?: number; c
     </div>
   )
 }
+
+export function EmptyTrayDoodle(props: DoodleProps) {
+  return (
+    <svg viewBox="0 0 100 84" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <ellipse cx="50" cy="30" rx="42" ry="11" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M8 30v14c0 6 18.8 11 42 11s42-5 42-11V30"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <circle cx="50" cy="31" r="17" strokeDasharray="3 4.5" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M47 2c.6 3.4 1.5 5.4 3.7 7.5M53.4 9.5c2.2-2.1 3.1-4.1 3.7-7.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}

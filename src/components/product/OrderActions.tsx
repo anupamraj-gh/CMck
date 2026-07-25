@@ -1,13 +1,16 @@
-import type { CSSProperties } from 'react'
+import { useRef, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Minus, Plus, ShoppingCart, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
+import { useLaunchFlight } from '@/hooks/useLaunchFlight'
+import { triggerHaptic } from '@/lib/haptics'
 
 interface OrderActionsProps {
   quantity: number
   unitPrice: number
+  productImage: string
   onQuantityChange: (qty: number) => void
   onAddToCart: () => void
 }
@@ -15,11 +18,20 @@ interface OrderActionsProps {
 export function OrderActions({
   quantity,
   unitPrice,
+  productImage,
   onQuantityChange,
   onAddToCart,
 }: OrderActionsProps) {
   const navigate = useNavigate()
+  const addButtonRef = useRef<HTMLButtonElement>(null)
+  const launchFlight = useLaunchFlight()
   const totalPrice = unitPrice * quantity
+
+  const handleAddClick = () => {
+    triggerHaptic()
+    onAddToCart()
+    launchFlight(addButtonRef.current, productImage)
+  }
 
   return (
     <section className="pt-8 pb-6 sm:pb-8">
@@ -47,7 +59,20 @@ export function OrderActions({
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
-                <span className="font-serif text-2xl font-bold w-8 text-center">{quantity}</span>
+                <span className="relative inline-grid w-8 place-items-center overflow-hidden text-center">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.span
+                      key={quantity}
+                      initial={{ opacity: 0, y: -10, scale: 0.7 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.7 }}
+                      transition={{ duration: 0.15 }}
+                      className="col-start-1 row-start-1 font-serif text-2xl font-bold"
+                    >
+                      {quantity}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
                 <Button
                   variant="outline"
                   size="icon"
@@ -68,7 +93,7 @@ export function OrderActions({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Button variant="coral" className="sm:col-span-1" onClick={onAddToCart}>
+              <Button ref={addButtonRef} variant="coral" className="sm:col-span-1" onClick={handleAddClick}>
                 <ShoppingCart className="h-4 w-4" />
                 Add to Cart
               </Button>

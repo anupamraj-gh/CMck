@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, ShoppingBag, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -333,7 +333,20 @@ export function CheckoutPage() {
                           >
                             -
                           </button>
-                          <span className="text-sm font-bold">{item.quantity}</span>
+                          <span className="relative inline-grid w-4 place-items-center overflow-hidden text-center">
+                            <AnimatePresence mode="popLayout" initial={false}>
+                              <motion.span
+                                key={item.quantity}
+                                initial={{ opacity: 0, y: -8, scale: 0.7 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 8, scale: 0.7 }}
+                                transition={{ duration: 0.15 }}
+                                className="col-start-1 row-start-1 text-sm font-bold"
+                              >
+                                {item.quantity}
+                              </motion.span>
+                            </AnimatePresence>
+                          </span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             className="h-6 w-6 rounded-full border-2 border-ink/15 flex items-center justify-center text-xs hover:bg-purple/30"
