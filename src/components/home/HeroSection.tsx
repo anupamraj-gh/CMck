@@ -23,7 +23,7 @@ export function HeroSection() {
   const heroProduct = products[0]
 
   return (
-    <section className="relative overflow-hidden bg-lavender bg-vignette pb-24 pt-4 sm:pb-32">
+    <section className="relative overflow-hidden bg-lavender bg-vignette pb-8 pt-4 sm:pb-32">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(58,49,69,0.06)_1px,transparent_0)] [background-size:18px_18px]" />
 
       <FloatingDoodle icon={StarDoodle} className="left-[6%] top-28 text-butter-deep" size={28} duration={5} />
@@ -32,7 +32,7 @@ export function HeroSection() {
       <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative max-w-5xl mx-auto lg:mx-0">
           <PaperStack>
-          <div className="relative bg-paper bg-grain page-fold craft-shadow-lg rounded-sm p-6 sm:p-10 lg:pr-64 lg:rotate-[-1deg] pb-12">
+          <div className="relative bg-paper bg-grain page-fold craft-shadow-lg rounded-sm p-6 sm:p-10 lg:pr-64 lg:rotate-[-1deg] pb-8">
             <div
               aria-hidden
               className="hidden lg:block pointer-events-none absolute right-48 top-3 bottom-3 w-10 bg-gradient-to-l from-ink/10 to-transparent"
@@ -44,7 +44,7 @@ export function HeroSection() {
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               className="text-center lg:text-left relative"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-butter/60 border-2 border-ink/10 craft-shadow-sm -rotate-2 mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-butter/60 border-2 border-ink/10 craft-shadow-sm -rotate-2 mb-5 lg:mb-6">
                 <span className="font-hand text-sm text-ink">{hero.badgeText}</span>
               </div>
 
@@ -57,7 +57,7 @@ export function HeroSection() {
                 </span>
               </h1>
 
-              <p className="font-serif italic text-lg sm:text-xl text-coral-deep mb-8">
+              <p className="font-serif italic text-lg sm:text-xl text-coral-deep mb-5 lg:mb-8">
                 {SITE_CONFIG.tagline}
               </p>
 
@@ -65,7 +65,7 @@ export function HeroSection() {
                 initial={{ opacity: 0, rotate: 8, y: 10 }}
                 animate={{ opacity: 1, rotate: 3, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.5 }}
-                className="inline-flex flex-col gap-1.5 bg-butter/70 border border-ink/10 rounded-md px-4 py-3 tape-shadow mb-8 mx-auto lg:mx-0"
+                className="inline-flex flex-col gap-1.5 bg-butter/70 border border-ink/10 rounded-md px-4 py-3 tape-shadow mb-5 mx-auto lg:mb-8 lg:mx-0"
               >
                 {hero.todaysSpecial.map((item) => (
                   <span key={item} className="flex items-center gap-2 font-hand text-base leading-none text-ink">
@@ -75,7 +75,7 @@ export function HeroSection() {
                 ))}
               </motion.div>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-5 lg:mb-8">
                 <Button variant="coral" size="lg" className="rotate-[-1deg]" asChild>
                   <a href="#menu">{hero.ctaPrimaryLabel}</a>
                 </Button>
@@ -95,8 +95,8 @@ export function HeroSection() {
           </div>
           </PaperStack>
 
-          <div className="relative flex justify-center mt-10 lg:mt-0 lg:block lg:absolute lg:top-8 lg:right-2 xl:right-6 lg:w-72">
-            <div className="relative w-64 sm:w-72 lg:w-full">
+          <div className="relative flex justify-center -mt-20 lg:mt-0 lg:block lg:absolute lg:top-8 lg:right-2 xl:right-6 lg:w-72">
+            <div className="relative w-[72%] max-w-[19rem] sm:w-72 lg:w-full ml-[12%] lg:ml-0">
               <div className="pointer-events-none absolute -inset-10 -z-10 rounded-full bg-[radial-gradient(circle,rgba(255,253,248,0.65),transparent_70%)]" />
 
               <WashiTape className="left-1/2 -top-3 -translate-x-1/2 z-10" color="var(--color-pink)" rotate={-3} width={100} />
@@ -138,7 +138,7 @@ export function HeroSection() {
 
               <div
                 aria-hidden
-                className="hidden sm:block absolute -bottom-3 -right-10 h-14 w-24 bg-peach/80 -rotate-6 tape-shadow deckle-bottom -z-10"
+                className="block absolute -bottom-3 -right-6 h-11 w-20 bg-peach/80 -rotate-6 tape-shadow deckle-bottom -z-10 sm:-right-10 sm:h-14 sm:w-24"
                 style={{ '--deckle-bg': 'var(--color-lavender)' } as CSSProperties}
               />
             </div>

@@ -18,7 +18,7 @@ import logo from '@/assets/logo-tophat.png'
 export function Footer() {
   return (
     <footer
-      className="relative mt-8 deckle-top page-fold overflow-hidden bg-ink text-cream pt-16 pb-10"
+      className="relative mt-8 deckle-top page-fold overflow-hidden bg-ink text-cream pt-7 sm:pt-16 pb-8 sm:pb-10"
       style={{ '--deckle-bg': 'var(--color-ink)' } as CSSProperties}
     >
       <div
@@ -35,11 +35,11 @@ export function Footer() {
       <StarDoodle className="absolute top-16 left-[8%] h-6 w-6 text-butter/70 animate-float-slow" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-3 sm:mb-8">
           <PageTab label={footer.pageLabel} rotate={-2} tone="paper" />
         </div>
 
-        <div className="text-center mb-14">
+        <div className="text-center mb-8 sm:mb-14">
           <WhiskDoodle className="h-9 w-5 text-cream/30 mx-auto mb-3 rotate-12" />
           <p className="font-hand text-3xl sm:text-4xl text-butter mb-3 leading-snug max-w-xl mx-auto">
             {footer.thankYouLines[0]}
@@ -56,11 +56,11 @@ export function Footer() {
           <ScribbleUnderline className="h-3 w-48 sm:w-56 text-coral mx-auto -mt-1" />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 pb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-10 pb-6 sm:pb-10">
           <div>
             <div className="flex items-center gap-2 justify-center sm:justify-start">
-              <img src={logo} alt={SITE_CONFIG.brandName} className="h-7 w-7 object-contain" />
-              <span className="font-hand text-3xl text-cream">{SITE_CONFIG.brandName}</span>
+              <img src={logo} alt={SITE_CONFIG.brandName} className="h-6 w-6 sm:h-7 sm:w-7 object-contain" />
+              <span className="font-hand text-2xl sm:text-3xl text-cream">{SITE_CONFIG.brandName}</span>
             </div>
             <ScribbleUnderline className="h-2.5 w-24 text-coral mt-1 mx-auto sm:mx-0" />
             <p className="text-cream/55 text-sm leading-relaxed mt-3">
@@ -114,7 +114,7 @@ export function Footer() {
             </div>
 
             <div
-              className="relative inline-block bg-purple/90 text-ink font-hand text-base px-4 py-3 rotate-[-3deg] tape-shadow max-w-[11rem]"
+              className="relative inline-block bg-purple/90 text-ink font-hand text-base px-4 py-3 max-sm:-rotate-6 max-sm:ml-8 sm:rotate-[-3deg] tape-shadow max-w-[11rem]"
               style={{ clipPath: 'polygon(2% 8%, 40% 0%, 78% 4%, 100% 14%, 96% 88%, 60% 100%, 15% 94%, 0% 80%)' }}
             >
               {footer.socialNote} <HeartDoodle className="h-3.5 w-3.5 text-coral-deep inline shrink-0" />
@@ -122,7 +122,7 @@ export function Footer() {
           </div>
         </div>
 
-        <StitchDivider className="h-4 w-full text-cream/15 mb-6" />
+        <StitchDivider className="h-4 w-full text-cream/15 mb-4 sm:mb-6" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-cream/40">

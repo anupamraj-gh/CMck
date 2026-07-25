@@ -177,7 +177,7 @@ export function ProductGrid() {
   const chefsRecommendation = getProductById(productGridContent.chefsRecommendationId)
 
   return (
-    <section id="menu" className="relative py-28 sm:py-36 scroll-mt-24 overflow-hidden">
+    <section id="menu" className="relative py-12 sm:py-36 scroll-mt-24 overflow-hidden">
       <span
         aria-hidden
         className="pointer-events-none absolute -top-4 right-0 font-serif font-bold text-[9rem] sm:text-[13rem] leading-none text-ink/[0.035] select-none hidden md:block"
@@ -190,7 +190,7 @@ export function ProductGrid() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-16 max-w-xl"
+          className="mb-10 lg:mb-16 max-w-xl"
         >
           <PageTab label={productGridContent.pageLabel} rotate={-2} className="mb-4" />
           <p className="font-hand text-2xl text-coral-deep mb-1">{productGridContent.kicker}</p>
@@ -203,22 +203,22 @@ export function ProductGrid() {
           </p>
         </motion.div>
 
-        <div className="mb-16">
+        <div className="mb-10 lg:mb-16">
           <FeaturedCard product={featured} index={0} rotate={-1.5} />
         </div>
 
-        <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-14 pb-8 sm:pb-16">
+        <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-14 max-sm:gap-y-6 pb-0 sm:pb-16">
           {rest.map((product, i) => {
             const globalIndex = i + 1
             const rotate = globalIndex % 2 === 0 ? -2.5 : 3
             const cfg = [
-              { span: 'lg:col-span-3', mt: 'lg:mt-10' },
-              { span: 'lg:col-span-5', mt: 'lg:mt-0' },
-              { span: 'lg:col-span-2', mt: 'lg:mt-16' },
-              { span: 'lg:col-span-2', mt: 'lg:mt-6' },
+              { span: 'lg:col-span-3', mt: 'lg:mt-10', mobile: 'max-sm:w-[88%] max-sm:mr-auto' },
+              { span: 'lg:col-span-5', mt: 'lg:mt-0', mobile: 'max-sm:w-[94%] max-sm:ml-auto max-sm:-mt-2' },
+              { span: 'lg:col-span-2', mt: 'lg:mt-16', mobile: 'max-sm:w-[76%] max-sm:mr-auto max-sm:-mt-4' },
+              { span: 'lg:col-span-2', mt: 'lg:mt-6', mobile: 'max-sm:w-[82%] max-sm:ml-auto max-sm:-mt-6' },
             ][i % 4]
             return (
-              <div key={product.id} className={`${cfg.span} ${cfg.mt}`}>
+              <div key={product.id} className={`${cfg.span} ${cfg.mt} ${cfg.mobile}`}>
                 <RecipeCard
                   product={product}
                   index={globalIndex}
@@ -231,7 +231,7 @@ export function ProductGrid() {
           })}
 
           {chefsRecommendation && (
-            <div className="flex justify-center sm:justify-end lg:absolute lg:-bottom-6 lg:right-4">
+            <div className="flex justify-end max-sm:-mt-8 lg:absolute lg:-bottom-6 lg:right-4">
               <Link to={`/product/${chefsRecommendation.id}`} className="block">
                 <StickyNote color="butter" rotate={-3} className="w-60 sm:w-64">
                   <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink/70 mb-1.5">
