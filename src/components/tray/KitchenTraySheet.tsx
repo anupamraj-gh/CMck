@@ -8,11 +8,13 @@ import { useCartStore } from '@/store/cartStore'
 import { useTraySheetStore } from '@/store/traySheetStore'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
-import { useCountUp } from '@/hooks/useCountUp'
+import { PaperSettleValue } from '@/components/craft/PaperSettleValue'
 import { formatCurrency } from '@/lib/utils'
 import { triggerHaptic } from '@/lib/haptics'
 import { SITE_CONFIG } from '@/config/content'
+import { EDITORIAL_STRINGS } from '@/config/editorialStrings'
 import { EmptyTrayDoodle } from '@/components/decor/Doodles'
+import { MOTION } from '@/lib/motion'
 import { TrayItemRow } from './TrayItemRow'
 import { TrayEditView } from './TrayEditView'
 
@@ -26,8 +28,6 @@ export function KitchenTraySheet() {
   const subtotal = useCartStore((s) => s.getSubtotal())
   const deliveryCharge = useCartStore((s) => s.getDeliveryCharge())
   const grandTotal = useCartStore((s) => s.getGrandTotal())
-  const displaySubtotal = useCountUp(subtotal)
-  const displayGrandTotal = useCountUp(grandTotal)
   const navigate = useNavigate()
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -83,7 +83,7 @@ export function KitchenTraySheet() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={MOTION.fade}
             onClick={close}
             aria-hidden
             className="fixed inset-0 z-[65] bg-ink/40"
@@ -114,7 +114,7 @@ export function KitchenTraySheet() {
                   <button
                     onClick={close}
                     aria-label="Close Kitchen Tray"
-                    className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-purple/30 text-ink"
+                    className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-purple/30 text-ink transition-colors duration-fast ease-hover"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -123,7 +123,7 @@ export function KitchenTraySheet() {
                 {items.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-10 gap-3">
                     <EmptyTrayDoodle className="h-16 w-16 text-ink/40" />
-                    <p className="font-hand text-2xl text-ink">Your Kitchen Tray is waiting.</p>
+                    <p className="font-hand text-2xl text-ink">{EDITORIAL_STRINGS.kitchenTrayWaiting}</p>
                     <p className="text-sm text-ink-soft max-w-xs">Add your favourite dishes to begin.</p>
                     <Button variant="coral" asChild>
                       <a href="/#menu" onClick={close}>Browse Menu</a>
@@ -132,19 +132,23 @@ export function KitchenTraySheet() {
                 ) : (
                   <>
                     <div className="flex-1 overflow-y-auto px-5">
-                      {items.map((item) => (
-                        <TrayItemRow key={item.id} item={item} />
-                      ))}
+                      <AnimatePresence mode="popLayout" initial={false}>
+                        {items.map((item) => (
+                          <TrayItemRow key={item.id} item={item} />
+                        ))}
+                      </AnimatePresence>
                     </div>
 
                     <div className="shrink-0 border-t border-ink-faint/15 px-5 py-4 space-y-2.5">
                       <div className="flex justify-between text-sm">
                         <span className="text-ink-soft">Subtotal</span>
-                        <span className="font-mono">{formatCurrency(displaySubtotal)}</span>
+                        <span className="font-mono"><PaperSettleValue value={formatCurrency(subtotal)} /></span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-ink-soft">Delivery</span>
-                        <span className="font-mono">{deliveryCharge === 0 ? 'FREE' : formatCurrency(deliveryCharge)}</span>
+                        <span className="font-mono">
+                          <PaperSettleValue value={deliveryCharge === 0 ? 'FREE' : formatCurrency(deliveryCharge)} />
+                        </span>
                       </div>
                       {subtotal < SITE_CONFIG.freeDeliveryAbove && (
                         <p className="text-xs text-ink-soft">
@@ -154,14 +158,20 @@ export function KitchenTraySheet() {
                       <Separator />
                       <div className="flex justify-between text-base font-bold">
                         <span>Estimated Total</span>
-                        <span className="font-mono text-coral-deep">{formatCurrency(displayGrandTotal)}</span>
+                        <span className="font-mono text-coral-deep"><PaperSettleValue value={formatCurrency(grandTotal)} /></span>
                       </div>
                       <Button variant="coral" size="lg" className="w-full mt-1" onClick={handleCheckout}>
-                        Continue to Checkout
+                        {EDITORIAL_STRINGS.sendToKitchen}
                       </Button>
                       <Button variant="ghost" className="w-full" onClick={close}>
-                        Continue Browsing
+                        Keep Browsing
                       </Button>
+                      {/* Visually-hidden live region: announces the updated total whenever an
+                          item's quantity or customization changes, without duplicating the
+                          visible totals above. */}
+                      <span className="sr-only" aria-live="polite">
+                        Estimated total {formatCurrency(grandTotal)}
+                      </span>
                     </div>
                   </>
                 )}

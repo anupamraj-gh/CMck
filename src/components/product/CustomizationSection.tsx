@@ -1,19 +1,12 @@
-import { motion } from 'framer-motion'
-import { cn } from '@/lib/utils'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { PaperCard } from '@/components/craft/PaperCard'
+import { useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { CustomizationGroupCard } from '@/components/product/CustomizationGroupCard'
+import { CustomizationOptionsList } from '@/components/product/CustomizationOptionsList'
 import { SparkleDoodle } from '@/components/decor/Doodles'
+import { useProgressiveCustomization } from '@/hooks/useProgressiveCustomization'
 import type { CustomizationGroup } from '@/types'
 import { formatCurrency } from '@/lib/utils'
+import { DURATION, EASE } from '@/lib/motion'
 
 interface CustomizationSectionProps {
   groups: CustomizationGroup[]
@@ -22,12 +15,41 @@ interface CustomizationSectionProps {
   unitPrice: number
 }
 
+/** A short one-line recap of a group's current selection, shown whenever it's collapsed. */
+function summarizeGroup(group: CustomizationGroup, selections: Record<string, string | string[]>): string {
+  const selected = selections[group.id]
+  if (group.type === 'checkbox') {
+    const ids = (selected as string[]) ?? []
+    if (ids.length === 0) return 'None selected'
+    return group.options
+      .filter((o) => ids.includes(o.id))
+      .map((o) => o.label)
+      .join(', ')
+  }
+  const option = group.options.find((o) => o.id === selected)
+  return option?.label ?? 'Not selected yet'
+}
+
 export function CustomizationSection({
   groups,
   selections,
   onSelectionChange,
   unitPrice,
 }: CustomizationSectionProps) {
+  const disclosure = useProgressiveCustomization(groups, selections)
+  const { markTouched } = disclosure
+
+  // Stable across renders (as long as `onSelectionChange` itself is, which ProductPage guarantees
+  // via its own useCallback) so the memoized CustomizationOptionsList below can actually bail out
+  // for every group except the one the customer just changed.
+  const handleSelectionChange = useCallback(
+    (groupId: string, value: string | string[]) => {
+      markTouched(groupId)
+      onSelectionChange(groupId, value)
+    },
+    [markTouched, onSelectionChange],
+  )
+
   return (
     <section className="py-16 sm:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
@@ -35,6 +57,7 @@ export function CustomizationSection({
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          transition={{ duration: DURATION.standard, ease: EASE.fade }}
           className="text-center mb-12"
         >
           <p className="font-hand text-2xl text-coral-deep mb-1">make it yours</p>
@@ -44,113 +67,26 @@ export function CustomizationSection({
 
         <div className="space-y-7">
           {groups.map((group, i) => (
-            <PaperCard
+            <CustomizationGroupCard
               key={group.id}
+              groupId={group.id}
+              status={disclosure.getStatus(group)}
+              title={group.label}
+              isRequired={!!group.required}
+              isExpanded={disclosure.isExpanded(group)}
+              canToggle={disclosure.canToggle(group)}
+              onToggle={disclosure.toggleGroup}
+              summary={summarizeGroup(group, selections)}
               tone={i % 2 === 0 ? 'paper' : 'cream'}
               rotate={i % 2 === 0 ? -0.6 : 0.6}
               wobble={((i % 4) + 1) as 1 | 2 | 3 | 4}
-              hoverLift={false}
-              className="p-6 sm:p-8"
             >
-              <h3 className="font-serif text-lg font-semibold text-ink mb-4">
-                {group.label}
-                {group.required && <span className="text-coral-deep ml-1">*</span>}
-              </h3>
-
-              {group.type === 'radio' && (
-                <RadioGroup
-                  value={(selections[group.id] as string) ?? ''}
-                  onValueChange={(value) => onSelectionChange(group.id, value)}
-                  className="space-y-2.5"
-                >
-                  {group.options.map((option) => {
-                    const isSelected = selections[group.id] === option.id
-                    return (
-                      <div
-                        key={option.id}
-                        className={cn(
-                          'flex items-center justify-between p-3.5 rounded-2xl border-2 transition-colors cursor-pointer',
-                          isSelected
-                            ? 'bg-mint/50 border-mint-deep'
-                            : 'border-transparent hover:bg-purple/25',
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          <RadioGroupItem value={option.id} id={`${group.id}-${option.id}`} />
-                          <Label htmlFor={`${group.id}-${option.id}`} className="cursor-pointer font-medium">
-                            {option.label}
-                          </Label>
-                        </div>
-                        {option.priceModifier !== 0 && (
-                          <span className="text-sm font-mono text-ink-soft">
-                            {option.priceModifier > 0 ? '+' : ''}
-                            {formatCurrency(option.priceModifier)}
-                          </span>
-                        )}
-                      </div>
-                    )
-                  })}
-                </RadioGroup>
-              )}
-
-              {group.type === 'checkbox' && (
-                <div className="space-y-2.5">
-                  {group.options.map((option) => {
-                    const selected = (selections[group.id] as string[]) ?? []
-                    const isChecked = selected.includes(option.id)
-                    return (
-                      <div
-                        key={option.id}
-                        className={cn(
-                          'flex items-center justify-between p-3.5 rounded-2xl border-2 transition-colors',
-                          isChecked
-                            ? 'bg-pink/40 border-pink-deep'
-                            : 'border-transparent hover:bg-purple/25',
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Checkbox
-                            id={`${group.id}-${option.id}`}
-                            checked={isChecked}
-                            onCheckedChange={(checked) => {
-                              const current = (selections[group.id] as string[]) ?? []
-                              const updated = checked
-                                ? [...current, option.id]
-                                : current.filter((id) => id !== option.id)
-                              onSelectionChange(group.id, updated)
-                            }}
-                          />
-                          <Label htmlFor={`${group.id}-${option.id}`} className="cursor-pointer font-medium">
-                            {option.label}
-                          </Label>
-                        </div>
-                        <span className="text-sm font-mono text-ink-soft">
-                          +{formatCurrency(option.priceModifier)}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-
-              {group.type === 'select' && (
-                <Select
-                  value={(selections[group.id] as string) ?? ''}
-                  onValueChange={(value) => onSelectionChange(group.id, value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={`Select ${group.label}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {group.options.map((option) => (
-                      <SelectItem key={option.id} value={option.id}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </PaperCard>
+              <CustomizationOptionsList
+                group={group}
+                selectedValue={selections[group.id]}
+                onChange={handleSelectionChange}
+              />
+            </CustomizationGroupCard>
           ))}
         </div>
 
@@ -158,11 +94,33 @@ export function CustomizationSection({
           initial={{ opacity: 0, y: 20, rotate: -1 }}
           whileInView={{ opacity: 1, y: 0, rotate: -1 }}
           viewport={{ once: true }}
+          transition={{ duration: DURATION.standard, ease: EASE.fade }}
           className="mt-10 p-6 rounded-3xl bg-ink text-cream text-center relative overflow-hidden"
         >
           <SparkleDoodle className="absolute top-3 right-4 h-5 w-5 text-butter animate-sparkle" />
+          <AnimatePresence mode="wait" initial={false}>
+            {disclosure.isConfigurationComplete && (
+              <motion.p
+                key="ready-to-cook"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: DURATION.standard, ease: EASE.fade }}
+                className="font-hand text-2xl text-mint mb-2"
+              >
+                Ready to Cook.
+              </motion.p>
+            )}
+          </AnimatePresence>
           <p className="font-hand text-xl text-cream/70 mb-1">current unit price</p>
           <p className="font-serif text-4xl font-bold text-butter">{formatCurrency(unitPrice)}</p>
+
+          {/* Visually-hidden live region: a persistent span so a screen reader announces the
+              transition into "Ready to Cook." — a brand-new element appearing isn't reliably
+              announced by every assistive tech, but a change within an already-present one is. */}
+          <span className="sr-only" aria-live="polite">
+            {disclosure.isConfigurationComplete ? 'Ready to Cook.' : ''}
+          </span>
         </motion.div>
       </div>
     </section>

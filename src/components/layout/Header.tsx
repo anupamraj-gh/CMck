@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { DURATION, EASE } from '@/lib/motion'
 import { ScribbleUnderline } from '@/components/decor/Doodles'
 import { useCartStore } from '@/store/cartStore'
 import { SITE_CONFIG, CONTENT } from '@/config/content'
@@ -42,10 +43,13 @@ export function Header() {
             <Link to="/checkout">
               <Button variant="ghost" size="icon" className="relative rounded-full">
                 <ShoppingBag className="h-5 w-5" />
-                <span className="sr-only">Cart</span>
+                <span className="sr-only">
+                  {itemCount > 0 ? `Kitchen Tray, ${itemCount} item${itemCount === 1 ? '' : 's'}` : 'Kitchen Tray'}
+                </span>
                 {itemCount > 0 && (
                   <motion.span
                     key={itemCount}
+                    aria-hidden
                     initial={{ scale: 0, rotate: -15 }}
                     animate={{ scale: 1, rotate: -8 }}
                     className="absolute -top-1.5 -right-1.5 h-[22px] w-[22px] min-w-[22px] px-1 rounded-full bg-coral text-[11px] font-bold text-paper flex items-center justify-center tape-shadow"
@@ -76,7 +80,7 @@ export function Header() {
             initial={{ opacity: 0, y: -12, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.97 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: DURATION.fast, ease: EASE.entrance }}
             className="md:hidden mx-3 mt-2 rounded-3xl border-2 border-ink/10 bg-paper craft-shadow-lg overflow-hidden"
           >
             {navLinks.map((link) => (

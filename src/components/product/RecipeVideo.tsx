@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WashiTape } from '@/components/decor/Doodles'
+import { DURATION, EASE } from '@/lib/motion'
 
 interface RecipeVideoProps {
   videoUrl: string
@@ -49,7 +50,7 @@ export function RecipeVideo({ videoUrl, poster, productName }: RecipeVideoProps)
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: DURATION.slow, ease: EASE.entrance }}
           className="relative max-w-5xl mx-auto"
         >
           <WashiTape className="left-8 -top-3 z-20" color="var(--color-butter)" rotate={-6} width={90} />
@@ -75,9 +76,9 @@ export function RecipeVideo({ videoUrl, poster, productName }: RecipeVideoProps)
 
               <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8">
                 <p className="font-hand text-2xl text-butter mb-1">watch the recipe</p>
-                <h2 className="font-serif text-xl sm:text-3xl font-bold text-cream mb-4">
+                <p className="font-serif text-xl sm:text-3xl font-bold text-cream mb-4">
                   How We Make {productName}
-                </h2>
+                </p>
 
                 <div className="flex items-center gap-3">
                   <Button

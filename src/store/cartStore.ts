@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem, CustomerInfo, CustomizationGroup, DeliveryInfo, SelectedCustomization } from '@/types'
 import { SITE_CONFIG } from '@/config/content'
+import { calculateLineTotal } from '@/lib/pricing'
 
 interface CartState {
   items: CartItem[]
@@ -46,7 +47,7 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item) => {
         const id = `${item.productId}-${Date.now()}`
-        const totalPrice = item.unitPrice * item.quantity
+        const totalPrice = calculateLineTotal(item.unitPrice, item.quantity)
         set((state) => ({
           items: [...state.items, { ...item, id, totalPrice }],
         }))
@@ -63,7 +64,7 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           items: state.items.map((item) =>
             item.id === id
-              ? { ...item, quantity, totalPrice: item.unitPrice * quantity }
+              ? { ...item, quantity, totalPrice: calculateLineTotal(item.unitPrice, quantity) }
               : item,
           ),
         }))
@@ -73,7 +74,7 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           items: state.items.map((item) =>
             item.id === id
-              ? { ...item, customizations, unitPrice, totalPrice: unitPrice * item.quantity }
+              ? { ...item, customizations, unitPrice, totalPrice: calculateLineTotal(unitPrice, item.quantity) }
               : item,
           ),
         }))
@@ -104,12 +105,32 @@ export const useCartStore = create<CartState>()(
   ),
 )
 
-export function calculateUnitPrice(
-  basePrice: number,
+/** Re-exported from the pricing engine so existing `import { calculateUnitPrice } from
+ * '@/store/cartStore'` call sites keep working unchanged — the implementation itself now lives
+ * in `@/lib/pricing`, the single source every pricing calculation in the app reads from. */
+export { calculateUnitPrice } from '@/lib/pricing'
+
+/** Stable signature for a set of selected customizations — customizations are always built by
+ * iterating a product's groups in a fixed order, so two matching configurations always produce
+ * identical arrays in the same order. */
+function customizationSignature(customizations: { groupId: string; optionId: string }[]): string {
+  return customizations.map((c) => `${c.groupId}:${c.optionId}`).join('|')
+}
+
+/**
+ * The single source of truth for "is this exact product configuration already in the cart" —
+ * used by both the homepage quick-add controls and the product page's sticky CTA so a quantity
+ * stepper always attaches to the one matching cart line instead of creating a duplicate.
+ */
+export function findMatchingCartItem(
+  items: CartItem[],
+  productId: string,
   customizations: SelectedCustomization[],
-): number {
-  const modifierSum = customizations.reduce((sum, c) => sum + c.priceModifier, 0)
-  return Math.max(basePrice + modifierSum, 0)
+): CartItem | undefined {
+  const signature = customizationSignature(customizations)
+  return items.find(
+    (item) => item.productId === productId && customizationSignature(item.customizations) === signature,
+  )
 }
 
 /**
@@ -127,6 +148,34 @@ export function needsCustomization(
     if (group.type === 'checkbox') return true
     return group.options.length === 0
   })
+}
+
+/**
+ * Whether a single customization group currently has a valid selection — a required radio/select
+ * group needs its value set to one of its own option ids, a required checkbox group needs at
+ * least one option chosen, and any optional group is trivially satisfied regardless of what (if
+ * anything) is selected. This is the one place that rule lives; both `areRequiredSelectionsComplete`
+ * (whole-product gating) and the per-group configuration model read from it.
+ */
+export function isGroupSelectionComplete(
+  group: { id: string; type: string; required?: boolean; options: { id: string }[] },
+  selections: Record<string, string | string[]>,
+): boolean {
+  if (!group.required) return true
+  const selected = selections[group.id]
+  if (group.type === 'checkbox') return Array.isArray(selected) && selected.length > 0
+  return typeof selected === 'string' && group.options.some((o) => o.id === selected)
+}
+
+/**
+ * Whether every required customization group currently has a valid selection. Used to gate any
+ * add-to-cart entry point (like the sticky product CTA) that must not submit an incomplete order.
+ */
+export function areRequiredSelectionsComplete(
+  groups: { id: string; type: string; required?: boolean; options: { id: string }[] }[],
+  selections: Record<string, string | string[]>,
+): boolean {
+  return groups.every((group) => isGroupSelectionComplete(group, selections))
 }
 
 export function buildDefaultSelections(

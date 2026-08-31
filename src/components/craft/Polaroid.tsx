@@ -1,6 +1,7 @@
 import { motion, type HTMLMotionProps } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { PhotoPlaceholder } from '@/components/craft/PhotoPlaceholder'
+import { DURATION, EASE } from '@/lib/motion'
 
 interface PolaroidProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
   src: string
@@ -24,8 +25,8 @@ export function Polaroid({
       initial={{ opacity: 0, y: -30, rotate: rotate - 8 }}
       whileInView={{ opacity: 1, y: 0, rotate }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ rotate: 0, y: -6, scale: 1.03, transition: { duration: 0.3 } }}
+      transition={{ duration: DURATION.slow, ease: EASE.entrance }}
+      whileHover={{ rotate: 0, y: -6, scale: 1.03, transition: { duration: DURATION.fast, ease: EASE.hover } }}
       className={cn('craft-shadow-lg bg-paper p-3 pb-5 rounded-sm', className)}
       {...props}
     >

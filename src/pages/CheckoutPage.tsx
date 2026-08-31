@@ -1,27 +1,50 @@
-import { useState, type CSSProperties } from 'react'
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Trash2, ShoppingBag, MessageCircle } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { ShoppingBag, ArrowRight, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
-import { PaperCard } from '@/components/craft/PaperCard'
-import { PhotoPlaceholder } from '@/components/craft/PhotoPlaceholder'
-import { StarDoodle, HeartDoodle, ScribbleUnderline } from '@/components/decor/Doodles'
+import { ScribbleUnderline } from '@/components/decor/Doodles'
+import { CheckoutStepCard, type CheckoutStepStatus } from '@/components/checkout/CheckoutStepCard'
+import { CustomerInformationStep } from '@/components/checkout/CustomerInformationStep'
+import { DeliveryDetailsStep } from '@/components/checkout/DeliveryDetailsStep'
+import { OrderSummaryStep } from '@/components/checkout/OrderSummaryStep'
+import { WhatsAppCtaStep } from '@/components/checkout/WhatsAppCtaStep'
+import { useCheckoutFlow, type CheckoutStepId } from '@/hooks/useCheckoutFlow'
 import { useCartStore } from '@/store/cartStore'
 import { formatCurrency, generateOrderId } from '@/lib/utils'
 import { downloadInvoice } from '@/lib/invoice'
 import { redirectToWhatsApp } from '@/lib/whatsapp'
-import { DELIVERY_TIME_SLOTS, SITE_CONFIG } from '@/config/content'
-import type { CustomerInfo, Order } from '@/types'
+import { EDITORIAL_STRINGS } from '@/config/editorialStrings'
+import type { CustomerInfo, DeliveryInfo, Order } from '@/types'
+
+/**
+ * Pure, single-source field validators for each step — reused by both `validate()` (the real gate
+ * before placing an order) and `isStepValid()` (the read-only check that drives each step's
+ * Continue button and the per-field blur handlers), so the rules only ever live in one place.
+ */
+function getCustomerFieldErrors(customer: CustomerInfo): Partial<Record<keyof CustomerInfo, string>> {
+  const errors: Partial<Record<keyof CustomerInfo, string>> = {}
+  if (!customer.fullName.trim()) errors.fullName = 'Please enter your full name'
+  if (!customer.mobileNumber.trim() || !/^\d{10}$/.test(customer.mobileNumber.replace(/\s/g, ''))) {
+    errors.mobileNumber = 'Enter a valid 10-digit mobile number'
+  }
+  if (!customer.houseFlat.trim()) errors.houseFlat = 'Please fill this in'
+  if (!customer.street.trim()) errors.street = 'Please fill this in'
+  if (!customer.area.trim()) errors.area = 'Please fill this in'
+  if (!customer.city.trim()) errors.city = 'Please fill this in'
+  if (!customer.state.trim()) errors.state = 'Please fill this in'
+  if (!customer.pinCode.trim() || !/^\d{6}$/.test(customer.pinCode)) {
+    errors.pinCode = 'Enter a valid 6-digit PIN'
+  }
+  return errors
+}
+
+function getDeliveryFieldErrors(delivery: DeliveryInfo): Partial<Record<keyof DeliveryInfo, string>> {
+  const errors: Partial<Record<keyof DeliveryInfo, string>> = {}
+  if (!delivery.preferredDate) errors.preferredDate = 'Please choose a delivery date'
+  if (!delivery.preferredTime) errors.preferredTime = 'Please choose a delivery time'
+  return errors
+}
 
 export function CheckoutPage() {
   const {
@@ -38,8 +61,17 @@ export function CheckoutPage() {
     clearCart,
   } = useCartStore()
 
-  const [errors, setErrors] = useState<Partial<Record<keyof CustomerInfo | 'preferredDate' | 'preferredTime', string>>>({})
+  // Kept as two separate state slices (rather than one shared object) so that typing in a
+  // Customer Information field never changes the `deliveryErrors` reference, and vice versa —
+  // each step's error state can update independently without forcing the other step's memoized
+  // content component to re-render.
+  const [customerErrors, setCustomerErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({})
+  const [deliveryErrors, setDeliveryErrors] = useState<Partial<Record<keyof DeliveryInfo, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // Distinguishes "order just placed" from "cart was never filled" — both end up rendering the
+  // same empty-cart branch below (clearCart() empties `items` either way), but they should not
+  // read as the same moment to the customer.
+  const [orderPlaced, setOrderPlaced] = useState(false)
 
   const subtotal = getSubtotal()
   const deliveryCharge = getDeliveryCharge()
@@ -47,34 +79,93 @@ export function CheckoutPage() {
 
   const minDate = new Date().toISOString().split('T')[0]
 
-  const validate = (): boolean => {
-    const newErrors: typeof errors = {}
+  const validate = useCallback((): boolean => {
+    const newCustomerErrors = getCustomerFieldErrors(customer)
+    const newDeliveryErrors = getDeliveryFieldErrors(delivery)
+    setCustomerErrors(newCustomerErrors)
+    setDeliveryErrors(newDeliveryErrors)
+    return Object.keys(newCustomerErrors).length === 0 && Object.keys(newDeliveryErrors).length === 0
+  }, [customer, delivery])
 
-    if (!customer.fullName.trim()) newErrors.fullName = 'Full name is required'
-    if (!customer.mobileNumber.trim() || !/^\d{10}$/.test(customer.mobileNumber.replace(/\s/g, ''))) {
-      newErrors.mobileNumber = 'Valid 10-digit mobile number required'
-    }
-    if (!customer.houseFlat.trim()) newErrors.houseFlat = 'Required'
-    if (!customer.street.trim()) newErrors.street = 'Required'
-    if (!customer.area.trim()) newErrors.area = 'Required'
-    if (!customer.city.trim()) newErrors.city = 'Required'
-    if (!customer.state.trim()) newErrors.state = 'Required'
-    if (!customer.pinCode.trim() || !/^\d{6}$/.test(customer.pinCode)) {
-      newErrors.pinCode = 'Valid 6-digit PIN required'
-    }
-    if (!delivery.preferredDate) newErrors.preferredDate = 'Select delivery date'
-    if (!delivery.preferredTime) newErrors.preferredTime = 'Select delivery time'
+  // Read-only per-step checks for the CheckoutFlow controller — reuses the same field validators
+  // as `validate()` above but never sets error state. `validate()` remains the one real gate
+  // `handlePayNow` calls before actually placing the order.
+  const isStepValid = useCallback(
+    (step: CheckoutStepId): boolean => {
+      switch (step) {
+        case 'customer':
+          return Object.keys(getCustomerFieldErrors(customer)).length === 0
+        case 'delivery':
+          return Object.keys(getDeliveryFieldErrors(delivery)).length === 0
+        case 'summary':
+          return items.length > 0
+        case 'whatsapp':
+          return isStepValid('customer') && isStepValid('delivery') && isStepValid('summary')
+      }
+    },
+    [customer, delivery, items],
+  )
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+  // Validates only the one field that was just left, so a customer seeing a step for the first
+  // time isn't shown every error at once — messages surface calmly, one at a time, as they tab
+  // through the form. Each handler only ever touches its own step's own error slice.
+  const handleCustomerBlur = useCallback(
+    (field: keyof CustomerInfo) => {
+      setCustomerErrors((prev) => ({ ...prev, [field]: getCustomerFieldErrors(customer)[field] }))
+    },
+    [customer],
+  )
+
+  const handleDeliveryBlur = useCallback(
+    (field: keyof DeliveryInfo) => {
+      setDeliveryErrors((prev) => ({ ...prev, [field]: getDeliveryFieldErrors(delivery)[field] }))
+    },
+    [delivery],
+  )
+
+  const checkoutFlow = useCheckoutFlow({ isStepValid })
+
+  // A step is "active" whenever it's the current one — even if already marked complete, so
+  // editing a previous step re-expands its full form without losing any of its data (the data
+  // itself lives in cartStore, untouched by step navigation). Anything before the current step
+  // collapses into its compact summary card; anything after is a muted, not-yet-reached preview.
+  const stepStatus = (step: CheckoutStepId): CheckoutStepStatus => {
+    if (step === checkoutFlow.currentStep) return 'active'
+    if (checkoutFlow.isStepComplete(step)) return 'completed'
+    return 'upcoming'
   }
 
-  const handleCustomerChange = (field: keyof CustomerInfo, value: string) => {
-    setCustomer({ ...customer, [field]: value })
-    setErrors((prev) => ({ ...prev, [field]: undefined }))
-  }
+  const { goToStep } = checkoutFlow
+  const handleEditCustomer = useCallback(() => goToStep('customer'), [goToStep])
+  const handleEditDelivery = useCallback(() => goToStep('delivery'), [goToStep])
+  const handleEditSummary = useCallback(() => goToStep('summary'), [goToStep])
+  const handleEditWhatsapp = useCallback(() => goToStep('whatsapp'), [goToStep])
 
-  const handlePayNow = async () => {
+  const handleCustomerChange = useCallback(
+    (field: keyof CustomerInfo, value: string) => {
+      setCustomer({ ...customer, [field]: value })
+      setCustomerErrors((prev) => ({ ...prev, [field]: undefined }))
+    },
+    [customer, setCustomer],
+  )
+
+  const handleDateChange = useCallback(
+    (value: string) => {
+      setDelivery({ ...delivery, preferredDate: value })
+      setDeliveryErrors((prev) => ({ ...prev, preferredDate: undefined }))
+    },
+    [delivery, setDelivery],
+  )
+
+  const handleTimeChange = useCallback(
+    (value: string) => {
+      setDelivery({ ...delivery, preferredTime: value })
+      setDeliveryErrors((prev) => ({ ...prev, preferredTime: undefined }))
+    },
+    [delivery, setDelivery],
+  )
+
+  const handlePayNow = useCallback(async () => {
     if (items.length === 0) return
     if (!validate()) return
 
@@ -99,9 +190,10 @@ export function CheckoutPage() {
 
     downloadInvoice(order)
     redirectToWhatsApp(order)
+    setOrderPlaced(true)
     clearCart()
     setIsSubmitting(false)
-  }
+  }, [items, validate, customer, delivery, subtotal, deliveryCharge, grandTotal, clearCart])
 
   if (items.length === 0) {
     return (
@@ -113,9 +205,26 @@ export function CheckoutPage() {
           className="relative bg-butter px-10 py-10 tape-shadow"
           style={{ clipPath: 'polygon(0% 2%, 98% 0%, 100% 96%, 3% 100%)' }}
         >
-          <ShoppingBag className="h-14 w-14 text-ink/70 mx-auto mb-4" />
-          <h2 className="font-hand text-3xl text-ink mb-2">Your cart is empty!</h2>
-          <p className="text-ink/70 mb-6 max-w-xs">Go browse our menu and pin some delicious items to your cart.</p>
+          {orderPlaced ? (
+            <>
+              {/* The stamp ring is otherwise unused decoration reserved for exactly this kind of
+                  moment — the one genuine "order confirmed" stamp in the whole flow, not a
+                  treatment every completed checkout step also gets. */}
+              <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-mint-deep text-mint-deep flex items-center justify-center stamp-ring">
+                <CheckCircle className="h-8 w-8 text-paper" />
+              </div>
+              <h2 className="font-hand text-3xl text-ink mb-2">Sent to the kitchen.</h2>
+              <p className="text-ink/70 mb-6 max-w-xs">
+                Your invoice downloaded and your order is waiting in WhatsApp — confirm there to finish up.
+              </p>
+            </>
+          ) : (
+            <>
+              <ShoppingBag className="h-14 w-14 text-ink/70 mx-auto mb-4" />
+              <h2 className="font-hand text-3xl text-ink mb-2">{EDITORIAL_STRINGS.kitchenTrayWaiting}</h2>
+              <p className="text-ink/70 mb-6 max-w-xs">Go browse our menu and pin some delicious items to your Kitchen Tray.</p>
+            </>
+          )}
           <Button variant="coral" asChild>
             <Link to="/">Explore Menu</Link>
           </Button>
@@ -133,275 +242,111 @@ export function CheckoutPage() {
           className="mb-10 text-center sm:text-left"
         >
           <p className="font-hand text-2xl text-coral-deep mb-1">almost there</p>
-          <h1 className="font-serif text-4xl font-bold text-ink">Checkout</h1>
+          <h1 className="font-serif text-4xl font-bold text-ink">{EDITORIAL_STRINGS.sendToKitchen}</h1>
           <ScribbleUnderline className="h-3 w-28 text-mint-deep mt-2 mx-auto sm:mx-0" />
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
-          <div className="lg:col-span-3 space-y-8">
-            <PaperCard tone="paper" rotate={-0.5} wobble={2} hoverLift={false} className="p-6 sm:p-8">
-              <h2 className="font-serif text-xl font-semibold mb-6 text-ink">Customer Information</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <Label htmlFor="fullName">Full Name *</Label>
-                  <Input
-                    id="fullName"
-                    value={customer.fullName}
-                    onChange={(e) => handleCustomerChange('fullName', e.target.value)}
-                    placeholder="Your full name"
-                    className="mt-1.5"
-                  />
-                  {errors.fullName && <p className="text-coral-deep text-xs font-bold mt-1">{errors.fullName}</p>}
-                </div>
-                <div className="sm:col-span-2">
-                  <Label htmlFor="mobile">Mobile Number *</Label>
-                  <Input
-                    id="mobile"
-                    value={customer.mobileNumber}
-                    onChange={(e) => handleCustomerChange('mobileNumber', e.target.value)}
-                    placeholder="10-digit mobile number"
-                    className="mt-1.5"
-                  />
-                  {errors.mobileNumber && <p className="text-coral-deep text-xs font-bold mt-1">{errors.mobileNumber}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="houseFlat">House / Flat No. *</Label>
-                  <Input
-                    id="houseFlat"
-                    value={customer.houseFlat}
-                    onChange={(e) => handleCustomerChange('houseFlat', e.target.value)}
-                    className="mt-1.5"
-                  />
-                  {errors.houseFlat && <p className="text-coral-deep text-xs font-bold mt-1">{errors.houseFlat}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="street">Street *</Label>
-                  <Input
-                    id="street"
-                    value={customer.street}
-                    onChange={(e) => handleCustomerChange('street', e.target.value)}
-                    className="mt-1.5"
-                  />
-                  {errors.street && <p className="text-coral-deep text-xs font-bold mt-1">{errors.street}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="area">Area *</Label>
-                  <Input
-                    id="area"
-                    value={customer.area}
-                    onChange={(e) => handleCustomerChange('area', e.target.value)}
-                    className="mt-1.5"
-                  />
-                  {errors.area && <p className="text-coral-deep text-xs font-bold mt-1">{errors.area}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="city">City *</Label>
-                  <Input
-                    id="city"
-                    value={customer.city}
-                    onChange={(e) => handleCustomerChange('city', e.target.value)}
-                    className="mt-1.5"
-                  />
-                  {errors.city && <p className="text-coral-deep text-xs font-bold mt-1">{errors.city}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="state">State *</Label>
-                  <Input
-                    id="state"
-                    value={customer.state}
-                    onChange={(e) => handleCustomerChange('state', e.target.value)}
-                    className="mt-1.5"
-                  />
-                  {errors.state && <p className="text-coral-deep text-xs font-bold mt-1">{errors.state}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="pinCode">PIN Code *</Label>
-                  <Input
-                    id="pinCode"
-                    value={customer.pinCode}
-                    onChange={(e) => handleCustomerChange('pinCode', e.target.value)}
-                    className="mt-1.5"
-                  />
-                  {errors.pinCode && <p className="text-coral-deep text-xs font-bold mt-1">{errors.pinCode}</p>}
-                </div>
-                <div className="sm:col-span-2">
-                  <Label htmlFor="landmark">Landmark (Optional)</Label>
-                  <Input
-                    id="landmark"
-                    value={customer.landmark}
-                    onChange={(e) => handleCustomerChange('landmark', e.target.value)}
-                    placeholder="Near..."
-                    className="mt-1.5"
-                  />
-                </div>
-              </div>
-            </PaperCard>
-
-            <PaperCard tone="cream" rotate={0.6} wobble={4} hoverLift={false} className="p-6 sm:p-8">
-              <h2 className="font-serif text-xl font-semibold mb-6 text-ink">Delivery Details</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="date">Preferred Delivery Date *</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    min={minDate}
-                    value={delivery.preferredDate}
-                    onChange={(e) => {
-                      setDelivery({ ...delivery, preferredDate: e.target.value })
-                      setErrors((prev) => ({ ...prev, preferredDate: undefined }))
-                    }}
-                    className="mt-1.5"
-                  />
-                  {errors.preferredDate && <p className="text-coral-deep text-xs font-bold mt-1">{errors.preferredDate}</p>}
-                </div>
-                <div>
-                  <Label>Preferred Delivery Time *</Label>
-                  <Select
-                    value={delivery.preferredTime}
-                    onValueChange={(value) => {
-                      setDelivery({ ...delivery, preferredTime: value })
-                      setErrors((prev) => ({ ...prev, preferredTime: undefined }))
-                    }}
-                  >
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Select time slot" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DELIVERY_TIME_SLOTS.map((slot) => (
-                        <SelectItem key={slot} value={slot}>
-                          {slot}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.preferredTime && <p className="text-coral-deep text-xs font-bold mt-1">{errors.preferredTime}</p>}
-                </div>
-              </div>
-            </PaperCard>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-2"
+        <div className="max-w-2xl mx-auto space-y-8">
+          <CheckoutStepCard
+            stepNumber={1}
+            heading="Let's get to know you"
+            stepLabel="Customer Information"
+            status={stepStatus('customer')}
+            tone="paper"
+            rotate={-0.5}
+            wobble={2}
+            summary={`${customer.fullName} · ${customer.mobileNumber}`}
+            onEdit={handleEditCustomer}
           >
-            <div
-              className="ticket-notch relative bg-paper craft-shadow-lg rounded-2xl p-6 sm:p-8 border-2 border-ink/10 sticky top-28"
-              style={{ '--notch-bg': 'var(--color-lavender)' } as CSSProperties}
+            <CustomerInformationStep
+              customer={customer}
+              errors={customerErrors}
+              onChange={handleCustomerChange}
+              onBlur={handleCustomerBlur}
+            />
+            <Button
+              variant="coral"
+              className="mt-6"
+              onClick={checkoutFlow.goNext}
+              disabled={!isStepValid('customer')}
             >
-              <StarDoodle className="absolute -top-3 -right-3 h-6 w-6 text-butter-deep animate-wiggle" />
-              <h2 className="font-serif text-xl font-semibold mb-6 text-ink">Order Summary</h2>
+              Next, delivery details
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </CheckoutStepCard>
 
-              <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
-                {items.map((item) => (
-                  <div key={item.id} className="flex gap-4">
-                    {item.productImage ? (
-                      <img
-                        src={item.productImage}
-                        alt={item.productName}
-                        className="h-16 w-16 rounded-xl object-cover shrink-0 border-2 border-ink/10"
-                      />
-                    ) : (
-                      <div className="h-16 w-16 rounded-xl shrink-0 border-2 border-ink/10 overflow-hidden">
-                        <PhotoPlaceholder compact />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-bold text-sm text-ink truncate">{item.productName}</h3>
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="text-ink-soft hover:text-coral-deep transition-colors shrink-0"
-                          aria-label={`Remove ${item.productName}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                      {item.customizations.length > 0 && (
-                        <p className="text-xs text-ink-soft mt-0.5 line-clamp-2">
-                          {item.customizations.map((c) => c.optionLabel).join(', ')}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="h-6 w-6 rounded-full border-2 border-ink/15 flex items-center justify-center text-xs hover:bg-purple/30"
-                            aria-label="Decrease quantity"
-                          >
-                            -
-                          </button>
-                          <span className="relative inline-grid w-4 place-items-center overflow-hidden text-center">
-                            <AnimatePresence mode="popLayout" initial={false}>
-                              <motion.span
-                                key={item.quantity}
-                                initial={{ opacity: 0, y: -8, scale: 0.7 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 8, scale: 0.7 }}
-                                transition={{ duration: 0.15 }}
-                                className="col-start-1 row-start-1 text-sm font-bold"
-                              >
-                                {item.quantity}
-                              </motion.span>
-                            </AnimatePresence>
-                          </span>
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="h-6 w-6 rounded-full border-2 border-ink/15 flex items-center justify-center text-xs hover:bg-purple/30"
-                            aria-label="Increase quantity"
-                          >
-                            +
-                          </button>
-                        </div>
-                        <span className="text-sm font-mono font-bold text-coral-deep">{formatCurrency(item.totalPrice)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <CheckoutStepCard
+            stepNumber={2}
+            heading="Where should today's recipe be delivered?"
+            stepLabel="Delivery Details"
+            status={stepStatus('delivery')}
+            tone="cream"
+            rotate={0.6}
+            wobble={4}
+            summary={`${delivery.preferredDate} · ${delivery.preferredTime}`}
+            onEdit={handleEditDelivery}
+          >
+            <DeliveryDetailsStep
+              delivery={delivery}
+              minDate={minDate}
+              errors={deliveryErrors}
+              onDateChange={handleDateChange}
+              onTimeChange={handleTimeChange}
+              onBlur={handleDeliveryBlur}
+            />
+            <Button
+              variant="coral"
+              className="mt-6"
+              onClick={checkoutFlow.goNext}
+              disabled={!isStepValid('delivery')}
+            >
+              Show me the order
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </CheckoutStepCard>
 
-              <Separator className="my-6" />
+          <CheckoutStepCard
+            stepNumber={3}
+            heading="One last look before we cook"
+            stepLabel="Today's Kitchen Tray"
+            status={stepStatus('summary')}
+            tone="lavender"
+            rotate={-0.4}
+            wobble={1}
+            summary={`${items.length} item${items.length === 1 ? '' : 's'} · ${formatCurrency(grandTotal)}`}
+            onEdit={handleEditSummary}
+          >
+            <OrderSummaryStep
+              items={items}
+              subtotal={subtotal}
+              deliveryCharge={deliveryCharge}
+              grandTotal={grandTotal}
+              onRemoveItem={removeItem}
+              onQuantityChange={updateQuantity}
+            />
+            <Button
+              variant="coral"
+              className="mt-6"
+              onClick={checkoutFlow.goNext}
+              disabled={!isStepValid('summary')}
+            >
+              Let's wrap this up
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </CheckoutStepCard>
 
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-ink-soft">Subtotal</span>
-                  <span className="font-mono">{formatCurrency(subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-soft">Delivery</span>
-                  <span className="font-mono">{deliveryCharge === 0 ? 'FREE' : formatCurrency(deliveryCharge)}</span>
-                </div>
-                {subtotal < SITE_CONFIG.freeDeliveryAbove && (
-                  <p className="text-xs text-ink-soft">
-                    Free delivery on orders above {formatCurrency(SITE_CONFIG.freeDeliveryAbove)}
-                  </p>
-                )}
-                <Separator />
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Grand Total</span>
-                  <span className="font-mono text-coral-deep">{formatCurrency(grandTotal)}</span>
-                </div>
-              </div>
-
-              <Button
-                variant="coral"
-                size="lg"
-                className="w-full mt-6"
-                onClick={handlePayNow}
-                disabled={isSubmitting}
-              >
-                <MessageCircle className="h-5 w-5" />
-                Pay Now via WhatsApp
-              </Button>
-
-              <p className="text-xs text-ink-soft text-center mt-4 inline-flex items-center justify-center gap-1 w-full">
-                Generates a PDF invoice &amp; opens WhatsApp with your order details
-                <HeartDoodle className="h-3.5 w-3.5 text-pink-deep shrink-0" />
-              </p>
-            </div>
-          </motion.div>
+          <CheckoutStepCard
+            stepNumber={4}
+            heading="Ready to send this to the kitchen?"
+            stepLabel="WhatsApp Confirmation"
+            status={stepStatus('whatsapp')}
+            tone="purple"
+            rotate={0.5}
+            wobble={3}
+            onEdit={handleEditWhatsapp}
+          >
+            <WhatsAppCtaStep grandTotal={grandTotal} isSubmitting={isSubmitting} onPayNow={handlePayNow} />
+          </CheckoutStepCard>
         </div>
       </div>
     </div>

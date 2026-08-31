@@ -1,19 +1,22 @@
+import type { Ref } from 'react'
 import { motion } from 'framer-motion'
 import { Clock } from 'lucide-react'
 import type { Product } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { Polaroid } from '@/components/craft/Polaroid'
 import { StarDoodle, ScribbleUnderline } from '@/components/decor/Doodles'
+import { DURATION, EASE } from '@/lib/motion'
 
 interface ProductHeroProps {
   product: Product
+  ref?: Ref<HTMLElement>
 }
 
 const chipColors = ['bg-mint', 'bg-pink', 'bg-butter', 'bg-blue', 'bg-peach']
 
-export function ProductHero({ product }: ProductHeroProps) {
+export function ProductHero({ product, ref }: ProductHeroProps) {
   return (
-    <section className="py-14 sm:py-20">
+    <section ref={ref} className="py-14 sm:py-20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div className="flex justify-center lg:justify-start">
@@ -31,7 +34,7 @@ export function ProductHero({ product }: ProductHeroProps) {
                 whileInView={{ opacity: 1, scale: 1, rotate: 10 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 13 }}
-                className="absolute -top-5 -right-5 h-20 w-20 rounded-full bg-coral text-paper border-2 border-paper craft-shadow flex flex-col items-center justify-center text-center leading-none"
+                className="absolute -top-5 -right-2 sm:-right-5 h-20 w-20 rounded-full bg-coral text-paper border-2 border-paper craft-shadow flex flex-col items-center justify-center text-center leading-none"
               >
                 <span className="text-[9px] font-bold uppercase opacity-80">from</span>
                 <span className="text-base font-extrabold">{formatCurrency(product.basePrice)}</span>
@@ -43,7 +46,7 @@ export function ProductHero({ product }: ProductHeroProps) {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: DURATION.slow, ease: EASE.entrance }}
           >
             <p className="font-hand text-2xl text-coral-deep mb-1">a signature item</p>
             <h1 className="font-serif text-4xl sm:text-5xl font-bold text-ink mb-4 leading-tight">

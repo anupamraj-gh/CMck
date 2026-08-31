@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { DURATION, EASE } from '@/lib/motion'
 
 interface PageTabProps {
   label: string
@@ -14,7 +15,7 @@ export function PageTab({ label, className, rotate = -3, tone = 'paper' }: PageT
       initial={{ opacity: 0, y: -8, rotate: rotate - 4 }}
       whileInView={{ opacity: 1, y: 0, rotate }}
       viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: DURATION.standard, ease: EASE.entrance }}
       className={cn(
         'inline-flex items-center gap-1.5 px-3 py-1 rounded-full border-2 font-mono text-[11px] font-bold tracking-wide craft-shadow-sm',
         tone === 'paper'

@@ -7,8 +7,9 @@ import { formatCurrency } from '@/lib/utils'
 import { triggerHaptic } from '@/lib/haptics'
 import { useFooterAvoidance } from '@/hooks/useFooterAvoidance'
 import { useBumpOnIncrease } from '@/hooks/useBumpOnIncrease'
-import { useCountUp } from '@/hooks/useCountUp'
+import { PaperSettleValue } from '@/components/craft/PaperSettleValue'
 import { WashiTape, ChefHatDoodle } from '@/components/decor/Doodles'
+import { DURATION, EASE } from '@/lib/motion'
 
 // A quick settle-back bounce + paper wobble, replayed by remounting the element via `key`.
 const bounceAnimate = {
@@ -19,7 +20,6 @@ const bounceAnimate = {
 export function FloatingKitchenTray() {
   const itemCount = useCartStore((s) => s.getItemCount())
   const subtotal = useCartStore((s) => s.getSubtotal())
-  const displaySubtotal = useCountUp(subtotal)
   const openSheet = useTraySheetStore((s) => s.open)
   const liftPx = useFooterAvoidance()
   const location = useLocation()
@@ -40,7 +40,7 @@ export function FloatingKitchenTray() {
     >
       <div
         style={{ transform: `translateY(-${liftPx}px)` }}
-        className="pointer-events-auto transition-transform duration-300 ease-out max-w-full"
+        className="pointer-events-auto transition-transform duration-standard ease-movement max-w-full"
       >
         <motion.button
           key={bumpKey}
@@ -52,7 +52,7 @@ export function FloatingKitchenTray() {
           aria-label={isEmpty ? 'Kitchen Tray, 0 items' : `Kitchen Tray, ${itemCount} item${itemCount === 1 ? '' : 's'}, ${formatCurrency(subtotal)}, view tray`}
           initial={{ scale: 1, rotate: -0.6 }}
           animate={bounceAnimate}
-          transition={{ duration: 0.32, ease: 'easeOut' }}
+          transition={{ duration: DURATION.standard, ease: EASE.entrance }}
           whileHover={{ rotate: 0, y: -2 }}
           whileFocus={{ rotate: 0, y: -2 }}
           className="group relative flex items-center gap-3 rounded-2xl border-2 border-ink/10 bg-paper bg-grain craft-shadow-lg pl-3 pr-4 py-2.5 max-w-full"
@@ -75,7 +75,7 @@ export function FloatingKitchenTray() {
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: DURATION.fast, ease: EASE.entrance }}
                   className="text-xs text-ink-soft truncate"
                 >
                   0 items · Tap to start ordering
@@ -86,10 +86,11 @@ export function FloatingKitchenTray() {
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: DURATION.fast, ease: EASE.entrance }}
                   className="text-xs font-bold text-ink-soft truncate"
                 >
-                  {itemCount} item{itemCount === 1 ? '' : 's'} · {formatCurrency(displaySubtotal)}
+                  {itemCount} item{itemCount === 1 ? '' : 's'} ·{' '}
+                  <PaperSettleValue value={formatCurrency(subtotal)} />
                 </motion.span>
               )}
             </AnimatePresence>
@@ -102,7 +103,7 @@ export function FloatingKitchenTray() {
             </span>
           )}
 
-          <kbd className="ml-1 shrink-0 hidden lg:inline-block rounded-md border border-ink/15 bg-lavender/50 px-1.5 py-0.5 text-[10px] font-mono font-bold text-ink-soft opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+          <kbd className="ml-1 shrink-0 hidden lg:inline-block rounded-md border border-ink/15 bg-lavender/50 px-1.5 py-0.5 text-[10px] font-mono font-bold text-ink-soft opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-fast ease-fade">
             ⇧K
           </kbd>
 

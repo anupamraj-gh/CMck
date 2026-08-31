@@ -1,5 +1,6 @@
 import { motion, type HTMLMotionProps } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { DURATION, EASE } from '@/lib/motion'
 
 interface StickyNoteProps extends HTMLMotionProps<'div'> {
   color?: 'butter' | 'pink' | 'mint' | 'blue' | 'peach'
@@ -27,7 +28,7 @@ export function StickyNote({
       whileInView={{ opacity: 1, scale: 1, rotate }}
       viewport={{ once: true, margin: '-40px' }}
       transition={{ type: 'spring', stiffness: 200, damping: 14 }}
-      whileHover={{ rotate: 0, scale: 1.04, transition: { duration: 0.25 } }}
+      whileHover={{ rotate: 0, scale: 1.04, transition: { duration: DURATION.fast, ease: EASE.hover } }}
       className={cn(
         'relative tape-shadow px-5 py-5',
         colorClasses[color],

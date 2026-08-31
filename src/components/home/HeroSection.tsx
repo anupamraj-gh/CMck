@@ -14,6 +14,7 @@ import {
 import { FloatingDoodle } from '@/components/craft/FloatingDoodle'
 import { PageTab } from '@/components/decor/PageTab'
 import { SITE_CONFIG, CONTENT } from '@/config/content'
+import { DURATION, EASE } from '@/lib/motion'
 import { products } from '@/data/products'
 
 const hero = CONTENT.hero
@@ -41,7 +42,7 @@ export function HeroSection() {
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: DURATION.slow, ease: EASE.entrance }}
               className="text-center lg:text-left relative"
             >
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-butter/60 border-2 border-ink/10 craft-shadow-sm -rotate-2 mb-5 lg:mb-6">
@@ -64,7 +65,7 @@ export function HeroSection() {
               <motion.div
                 initial={{ opacity: 0, rotate: 8, y: 10 }}
                 animate={{ opacity: 1, rotate: 3, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
+                transition={{ delay: 0.6, duration: DURATION.slow, ease: EASE.entrance }}
                 className="inline-flex flex-col gap-1.5 bg-butter/70 border border-ink/10 rounded-md px-4 py-3 tape-shadow mb-5 mx-auto lg:mb-8 lg:mx-0"
               >
                 {hero.todaysSpecial.map((item) => (

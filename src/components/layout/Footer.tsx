@@ -13,6 +13,7 @@ import {
   WhiskDoodle,
 } from '@/components/decor/Doodles'
 import { PageTab } from '@/components/decor/PageTab'
+import { EDITORIAL_STRINGS } from '@/config/editorialStrings'
 import logo from '@/assets/logo-tophat.png'
 
 export function Footer() {
@@ -79,7 +80,7 @@ export function Footer() {
                 </li>
               ))}
               <li><a href={`mailto:${SITE_CONFIG.supportEmail}`} className="hover:text-butter transition-colors">Contact</a></li>
-              <li><Link to="/checkout" className="hover:text-butter transition-colors">Checkout</Link></li>
+              <li><Link to="/checkout" className="hover:text-butter transition-colors">{EDITORIAL_STRINGS.sendToKitchen}</Link></li>
             </ul>
           </div>
 

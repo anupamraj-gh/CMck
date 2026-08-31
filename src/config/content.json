@@ -53,10 +53,7 @@
     "chefsRecommendationId": "cookie-collection",
     "chefsRecommendationNote": "made fresh daily!",
     "addLabel": "Add",
-    "addFullLabel": "Add to Kitchen Tray",
-    "addedLabel": "Added",
-    "customizeLabel": "Customize",
-    "soldOutLabel": "Sold Out"
+    "customizeLabel": "Customize"
   },
   "about": {
     "pageLabel": "THE STORY · Pg. 03",

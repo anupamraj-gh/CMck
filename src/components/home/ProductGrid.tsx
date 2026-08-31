@@ -12,11 +12,14 @@ import {
   selectionsToCustomizations,
   calculateUnitPrice,
   needsCustomization,
+  findMatchingCartItem,
 } from '@/store/cartStore'
 import { useLaunchFlight } from '@/hooks/useLaunchFlight'
 import { triggerHaptic } from '@/lib/haptics'
+import { DURATION, EASE } from '@/lib/motion'
 import { useBumpOnIncrease } from '@/hooks/useBumpOnIncrease'
 import { useProductCartQuantity } from '@/hooks/useProductCartQuantity'
+import { EDITORIAL_STRINGS, itemAddedAnnouncement } from '@/config/editorialStrings'
 
 const productGridContent = CONTENT.productGrid
 import { WashiTape, ScribbleUnderline, NotebookHoles, HeartDoodle } from '@/components/decor/Doodles'
@@ -75,10 +78,6 @@ function PriceBadge({ product, rotate, index }: { product: (typeof products)[num
   )
 }
 
-function signatureOf(customizations: { groupId: string; optionId: string }[]): string {
-  return customizations.map((c) => `${c.groupId}:${c.optionId}`).join('|')
-}
-
 function QuickAddControl({
   product,
   compact = false,
@@ -93,6 +92,9 @@ function QuickAddControl({
   const updateQuantity = useCartStore((s) => s.updateQuantity)
   const removeItem = useCartStore((s) => s.removeItem)
   const [justAdded, setJustAdded] = useState(false)
+  // Whether the tray was empty right before this specific add — a one-time, meaningful moment
+  // that deserves different wording than every later, routine add.
+  const [wasFirstItem, setWasFirstItem] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const addButtonRef = useRef<HTMLButtonElement>(null)
   const launchFlight = useLaunchFlight()
@@ -105,12 +107,8 @@ function QuickAddControl({
     return selectionsToCustomizations(product.customizations, selections)
   }, [product])
 
-  const signature = useMemo(() => signatureOf(defaultCustomizations), [defaultCustomizations])
   const requiresCustomizer = useMemo(() => needsCustomization(product.customizations), [product])
-
-  const existing = items.find(
-    (item) => item.productId === product.id && signatureOf(item.customizations) === signature,
-  )
+  const existing = findMatchingCartItem(items, product.id, defaultCustomizations)
 
   const stop = (e: MouseEvent) => {
     e.preventDefault()
@@ -128,6 +126,7 @@ function QuickAddControl({
       navigate(`/product/${product.id}`)
       return
     } else {
+      setWasFirstItem(items.length === 0)
       const unitPrice = calculateUnitPrice(product.basePrice, defaultCustomizations)
       addItem({
         productId: product.id,
@@ -162,12 +161,12 @@ function QuickAddControl({
   if (product.available === false) {
     return (
       <span
-        aria-label={productGridContent.soldOutLabel}
+        aria-label={EDITORIAL_STRINGS.currentlyUnavailable}
         className={`inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-ink-faint/25 bg-lavender/40 font-bold text-ink-faint craft-shadow-sm shrink-0 cursor-not-allowed ${
           compact ? 'h-7 w-7 text-xs' : 'h-8 px-4 text-sm'
         }`}
       >
-        {compact ? '×' : productGridContent.soldOutLabel}
+        {compact ? '×' : EDITORIAL_STRINGS.currentlyUnavailable}
       </span>
     )
   }
@@ -183,7 +182,7 @@ function QuickAddControl({
           whileTap={{ scale: 0.85 }}
           onClick={handleDecrement}
           aria-label="Decrease quantity"
-          className={`rounded-full flex items-center justify-center text-ink font-bold hover:bg-purple/30 transition-colors ${compact ? 'h-5 w-5 text-xs' : 'h-6 w-6 text-sm'}`}
+          className={`rounded-full flex items-center justify-center text-ink font-bold hover:bg-purple/30 transition-colors duration-fast ease-hover ${compact ? 'h-5 w-5 text-xs' : 'h-6 w-6 text-sm'}`}
         >
           −
         </motion.button>
@@ -194,7 +193,7 @@ function QuickAddControl({
               initial={{ opacity: 0, y: -8, scale: 0.7 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.7 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: DURATION.extraFast, ease: EASE.press }}
               className="col-start-1 row-start-1"
             >
               {existing.quantity}
@@ -206,7 +205,7 @@ function QuickAddControl({
           whileTap={{ scale: 0.85 }}
           onClick={handleIncrement}
           aria-label="Increase quantity"
-          className={`rounded-full flex items-center justify-center text-ink font-bold hover:bg-purple/30 transition-colors ${compact ? 'h-5 w-5 text-xs' : 'h-6 w-6 text-sm'}`}
+          className={`rounded-full flex items-center justify-center text-ink font-bold hover:bg-purple/30 transition-colors duration-fast ease-hover ${compact ? 'h-5 w-5 text-xs' : 'h-6 w-6 text-sm'}`}
         >
           +
         </motion.button>
@@ -220,8 +219,8 @@ function QuickAddControl({
       type="button"
       whileTap={{ scale: 0.94 }}
       onClick={handleAdd}
-      aria-label={compact ? productGridContent.addFullLabel : undefined}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-full bg-coral text-paper font-bold craft-shadow-sm hover:bg-coral-deep transition-colors overflow-hidden ${
+      aria-label={compact ? EDITORIAL_STRINGS.addToKitchenTray : undefined}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-full bg-coral text-paper font-bold craft-shadow-sm hover:bg-coral-deep transition-colors duration-fast ease-hover overflow-hidden ${
         compact ? 'h-7 w-7 shrink-0' : 'h-8 px-4 text-sm'
       }`}
     >
@@ -232,11 +231,11 @@ function QuickAddControl({
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: DURATION.fast, ease: EASE.entrance }}
             className="inline-flex items-center gap-1.5"
           >
             <Check className={compact ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
-            {!compact && productGridContent.addedLabel}
+            {!compact && (wasFirstItem ? "Your recipe is coming together." : EDITORIAL_STRINGS.itemAddedToKitchenTray)}
           </motion.span>
         ) : (
           <motion.span
@@ -244,16 +243,16 @@ function QuickAddControl({
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: DURATION.fast, ease: EASE.entrance }}
             className="inline-flex items-center gap-1.5"
           >
             <Plus className={compact ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
-            {!compact && (fullLabel ? productGridContent.addFullLabel : productGridContent.addLabel)}
+            {!compact && (fullLabel ? EDITORIAL_STRINGS.addToKitchenTray : productGridContent.addLabel)}
           </motion.span>
         )}
       </AnimatePresence>
       <span className="sr-only" aria-live="polite">
-        {justAdded ? `${product.name} added to tray` : ''}
+        {justAdded ? itemAddedAnnouncement(product.name) : ''}
       </span>
     </motion.button>
   )
@@ -268,15 +267,15 @@ function FeaturedCard({ product, index, rotate }: CardProps) {
       initial={{ opacity: 0, y: 44, rotate: rotate - 6 }}
       whileInView={{ opacity: 1, y: 0, rotate }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.55, delay: 0, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ rotate: 0, y: -8, scale: 1.01 }}
+      transition={{ duration: DURATION.slow, ease: EASE.entrance }}
+      whileHover={{ rotate: 0, y: -8, scale: 1.01, transition: { duration: DURATION.fast, ease: EASE.hover } }}
       className="relative group"
     >
       <PaperStack>
       <motion.div
         key={compressKey}
         animate={{ scale: [1, 0.98, 1] }}
-        transition={{ duration: 0.22, ease: 'easeOut' }}
+        transition={{ duration: DURATION.fast, ease: EASE.entrance }}
         className="relative bg-paper bg-grain p-5 sm:p-6 sm:pl-14 craft-shadow-lg rounded-sm border border-ink/10 lg:grid lg:grid-cols-[1fr_1.1fr] lg:gap-8 lg:items-center">
         <NotebookHoles count={7} className="absolute left-4 sm:left-5 top-8 bottom-8 hidden sm:flex" />
         <WashiTape className="left-1/2 -top-3.5 -translate-x-1/2 z-10" color="var(--color-mint)" rotate={-4} width={90} />
@@ -300,7 +299,7 @@ function FeaturedCard({ product, index, rotate }: CardProps) {
 
         <div className="pt-5 lg:pt-0 flex flex-col">
           <Link to={`/product/${product.id}`} className="block">
-            <h3 className="font-serif font-semibold text-ink leading-snug group-hover:text-coral-deep transition-colors mb-1.5 text-2xl sm:text-3xl">
+            <h3 className="font-serif font-semibold text-ink leading-snug group-hover:text-coral-deep transition-colors duration-fast ease-hover mb-1.5 text-2xl sm:text-3xl">
               {product.name}
             </h3>
           </Link>
@@ -310,7 +309,7 @@ function FeaturedCard({ product, index, rotate }: CardProps) {
             <QuickAddControl product={product} fullLabel />
             <Link
               to={`/product/${product.id}`}
-              className="text-sm font-bold text-ink-soft hover:text-coral-deep transition-colors inline-flex items-center gap-1 shrink-0"
+              className="text-sm font-bold text-ink-soft hover:text-coral-deep transition-colors duration-fast ease-hover inline-flex items-center gap-1 shrink-0"
             >
               {productGridContent.customizeLabel}
               <ArrowRight className="h-3.5 w-3.5" />
@@ -334,19 +333,19 @@ function RecipeCard({ product, index, rotate, bestseller = false, compact = fals
       initial={{ opacity: 0, y: 44, rotate: rotate - 6 }}
       whileInView={{ opacity: 1, y: 0, rotate }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.55, delay: (index % 3) * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ rotate: 0, y: -8, scale: 1.02 }}
+      transition={{ duration: DURATION.slow, delay: (index % 3) * 0.08, ease: EASE.entrance }}
+      whileHover={{ rotate: 0, y: -8, scale: 1.02, transition: { duration: DURATION.fast, ease: EASE.hover } }}
       className="relative h-full group"
     >
       <motion.div
         key={compressKey}
         animate={{ scale: [1, 0.98, 1] }}
-        transition={{ duration: 0.22, ease: 'easeOut' }}
+        transition={{ duration: DURATION.fast, ease: EASE.entrance }}
         className="relative bg-paper bg-grain p-3 pb-4 craft-shadow-lg rounded-sm border border-ink/10 h-full flex flex-col overflow-hidden"
       >
         {bestseller && (
-          <div className="absolute -left-10 top-5 w-40 bg-coral text-paper text-[10px] font-bold uppercase tracking-wider text-center py-1 -rotate-45 z-10 craft-shadow-sm">
-            Bestseller
+          <div className="absolute -left-14 top-7 w-60 bg-coral text-paper text-[10px] font-bold uppercase tracking-wider text-center py-1 -rotate-45 z-10 craft-shadow-sm">
+            Kitchen Favourite
           </div>
         )}
         <WashiTape
@@ -376,7 +375,7 @@ function RecipeCard({ product, index, rotate, bestseller = false, compact = fals
 
         <div className="pt-4 px-1 flex flex-col flex-1">
           <Link to={`/product/${product.id}`} className="block">
-            <h3 className={`font-serif font-semibold text-ink leading-snug group-hover:text-coral-deep transition-colors mb-1 ${compact ? 'text-base' : 'text-lg'}`}>
+            <h3 className={`font-serif font-semibold text-ink leading-snug group-hover:text-coral-deep transition-colors duration-fast ease-hover mb-1 ${compact ? 'text-base' : 'text-lg'}`}>
               {product.name}
             </h3>
           </Link>
@@ -387,7 +386,7 @@ function RecipeCard({ product, index, rotate, bestseller = false, compact = fals
             <Link
               to={`/product/${product.id}`}
               aria-label={compact ? productGridContent.customizeLabel : undefined}
-              className="text-xs font-bold text-ink-soft hover:text-coral-deep transition-colors inline-flex items-center gap-1 shrink-0"
+              className="text-xs font-bold text-ink-soft hover:text-coral-deep transition-colors duration-fast ease-hover inline-flex items-center gap-1 shrink-0"
             >
               {compact ? <ArrowRight className="h-3 w-3" /> : productGridContent.customizeLabel}
             </Link>
@@ -463,7 +462,7 @@ export function ProductGrid() {
               <Link to={`/product/${chefsRecommendation.id}`} className="block">
                 <StickyNote color="butter" rotate={-3} className="w-60 sm:w-64">
                   <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink/70 mb-1.5">
-                    Chef&apos;s Recommendation
+                    Chef Recommends
                   </p>
                   <p className="font-hand text-xl leading-snug text-ink mb-1">
                     Try our {chefsRecommendation.name}

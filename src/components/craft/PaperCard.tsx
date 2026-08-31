@@ -1,5 +1,6 @@
 import { motion, type HTMLMotionProps } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { DURATION, EASE, MOTION } from '@/lib/motion'
 
 interface PaperCardProps extends HTMLMotionProps<'div'> {
   rotate?: number
@@ -31,9 +32,9 @@ export function PaperCard({
       initial={{ opacity: 0, y: 24, rotate: rotate - 2 }}
       whileInView={{ opacity: 1, y: 0, rotate }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      transition={MOTION.entrance}
       whileHover={
-        hoverLift ? { rotate: 0, y: -6, scale: 1.015, transition: { duration: 0.3 } } : undefined
+        hoverLift ? { rotate: 0, y: -6, scale: 1.015, transition: { duration: DURATION.fast, ease: EASE.hover } } : undefined
       }
       className={cn(
         'craft-shadow relative bg-grain wobble-' + wobble,

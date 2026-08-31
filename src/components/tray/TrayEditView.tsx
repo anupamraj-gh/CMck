@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -13,13 +14,10 @@ import {
 } from '@/components/ui/select'
 import { cn, formatCurrency } from '@/lib/utils'
 import { getProductById } from '@/data/products'
-import {
-  useCartStore,
-  calculateUnitPrice,
-  customizationsToSelections,
-  selectionsToCustomizations,
-} from '@/store/cartStore'
+import { useCartStore, customizationsToSelections, areRequiredSelectionsComplete } from '@/store/cartStore'
 import { useTraySheetStore } from '@/store/traySheetStore'
+import { usePricing } from '@/hooks/usePricing'
+import { DURATION, EASE } from '@/lib/motion'
 import type { CartItem } from '@/types'
 
 export function TrayEditView({ item }: { item: CartItem }) {
@@ -32,21 +30,25 @@ export function TrayEditView({ item }: { item: CartItem }) {
   const [selections, setSelections] = useState<Record<string, string | string[]>>(() =>
     product ? customizationsToSelections(product.customizations, item.customizations) : {},
   )
+  // Only true once the customer actually changes something — an already-in-cart item's
+  // selections are valid by definition, so showing an encouragement before any edit would just
+  // be default state, not a reaction to anything they did.
+  const [hasEdited, setHasEdited] = useState(false)
 
-  const customizations = useMemo(() => {
-    if (!product) return []
-    return selectionsToCustomizations(product.customizations, selections)
-  }, [product, selections])
-
-  const unitPrice = useMemo(() => {
-    if (!product) return 0
-    return calculateUnitPrice(product.basePrice, customizations)
-  }, [product, customizations])
+  const { customizations, unitPrice } = usePricing(
+    product?.basePrice ?? 0,
+    product?.customizations ?? [],
+    selections,
+    item.quantity,
+  )
 
   if (!product) return null
 
+  const isComplete = areRequiredSelectionsComplete(product.customizations, selections)
+
   const handleSelectionChange = (groupId: string, value: string | string[]) => {
     setSelections((prev) => ({ ...prev, [groupId]: value }))
+    setHasEdited(true)
   }
 
   const handleSave = () => {
@@ -60,7 +62,7 @@ export function TrayEditView({ item }: { item: CartItem }) {
         <button
           onClick={closeEdit}
           aria-label="Back to tray"
-          className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-purple/30 text-ink shrink-0"
+          className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-purple/30 text-ink transition-colors duration-fast ease-hover shrink-0"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -87,7 +89,7 @@ export function TrayEditView({ item }: { item: CartItem }) {
                     <div
                       key={option.id}
                       className={cn(
-                        'flex items-center justify-between p-2.5 rounded-xl border-2 transition-colors cursor-pointer',
+                        'flex items-center justify-between p-2.5 rounded-xl border-2 transition-colors duration-fast ease-hover cursor-pointer',
                         isSelected ? 'bg-mint/50 border-mint-deep' : 'border-transparent hover:bg-purple/25',
                       )}
                     >
@@ -118,7 +120,7 @@ export function TrayEditView({ item }: { item: CartItem }) {
                     <div
                       key={option.id}
                       className={cn(
-                        'flex items-center justify-between p-2.5 rounded-xl border-2 transition-colors',
+                        'flex items-center justify-between p-2.5 rounded-xl border-2 transition-colors duration-fast ease-hover',
                         isChecked ? 'bg-pink/40 border-pink-deep' : 'border-transparent hover:bg-purple/25',
                       )}
                     >
@@ -166,14 +168,37 @@ export function TrayEditView({ item }: { item: CartItem }) {
         ))}
       </div>
 
-      <div className="shrink-0 border-t border-ink-faint/15 px-5 py-4 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs text-ink-soft leading-none mb-1">Unit price</p>
-          <p className="font-serif text-xl font-bold text-coral-deep leading-none">{formatCurrency(unitPrice)}</p>
+      <div className="shrink-0 border-t border-ink-faint/15 px-5 py-4">
+        <AnimatePresence mode="wait" initial={false}>
+          {hasEdited && isComplete && (
+            <motion.p
+              key="looks-delicious"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: DURATION.standard, ease: EASE.fade }}
+              className="font-hand text-lg text-mint-deep text-center mb-2"
+            >
+              Looks delicious.
+            </motion.p>
+          )}
+        </AnimatePresence>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-ink-soft leading-none mb-1">Unit price</p>
+            <p className="font-serif text-xl font-bold text-coral-deep leading-none">{formatCurrency(unitPrice)}</p>
+          </div>
+          <Button variant="coral" onClick={handleSave}>
+            Save to Kitchen Tray
+          </Button>
         </div>
-        <Button variant="coral" onClick={handleSave}>
-          Save Changes
-        </Button>
+
+        {/* Visually-hidden live region: a persistent span so a screen reader announces the
+            transition into "Looks delicious." — a brand-new element appearing isn't reliably
+            announced by every assistive tech, but a change within an already-present one is. */}
+        <span className="sr-only" aria-live="polite">
+          {hasEdited && isComplete ? 'Looks delicious.' : ''}
+        </span>
       </div>
     </div>
   )

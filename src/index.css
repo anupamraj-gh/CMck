@@ -36,6 +36,29 @@
 
   --shadow-color: 260 20% 30%;
 
+  /* Editorial Motion System. Shared duration/easing tokens (see docs/motion-system.md), expressed
+     here as Tailwind theme namespaces so plain-CSS transitions (buttons, inputs, checkboxes) and
+     utility classes (duration-standard, ease-entrance, ...) can consume the same values Framer
+     Motion consumers get from src/lib/motion.ts. Durations use Tailwind's own
+     --transition-duration-* namespace (the one its `duration-*` utility actually resolves against
+     — a plain --duration-* namespace silently produces no CSS at all); easing uses --ease-*, which
+     the `ease-*` utility does read directly. The two files (this one and motion.ts) must be kept
+     numerically in sync by hand — CSS custom properties are not readable by the Framer Motion
+     JS-driven animations, so there is no way to share one literal source across both. */
+  --transition-duration-extra-fast: 150ms;
+  --transition-duration-fast: 200ms;
+  --transition-duration-standard: 300ms;
+  --transition-duration-slow: 550ms;
+
+  --ease-entrance: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-exit: cubic-bezier(0.64, 0, 0.78, 0);
+  --ease-hover: cubic-bezier(0.35, 0, 0.65, 1);
+  --ease-press: cubic-bezier(0.35, 0, 0.65, 1);
+  --ease-expand: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-collapse: cubic-bezier(0.64, 0, 0.78, 0);
+  --ease-fade: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-movement: cubic-bezier(0.45, 0, 0.55, 1);
+
   --animate-float: float 6s ease-in-out infinite;
   --animate-float-slow: float 9s ease-in-out infinite;
   --animate-wiggle: wiggle 4s ease-in-out infinite;
@@ -91,6 +114,23 @@
   :focus-visible {
     outline: 2.5px dashed var(--color-coral-deep);
     outline-offset: 3px;
+  }
+
+  /* Editorial Motion System — the CSS-side reduced-motion switch. `<MotionConfig
+     reducedMotion="user">` (src/App.tsx) already handles every Framer Motion animation, but a
+     sizeable share of the app's motion is plain CSS — the button/card/input hover transitions, the
+     product-image hover-zoom, and the decorative --animate-float/wiggle/pop/drop/sparkle keyframes
+     (StarDoodle, WhiskDoodle, the sparkle icon, etc.) — none of which Framer's setting can reach.
+     This is the standard "nuke it from orbit" reduced-motion reset: it collapses every CSS
+     transition/animation to a single imperceptible frame for anyone who has asked their OS for
+     less motion, without changing a single visual value for anyone who hasn't. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

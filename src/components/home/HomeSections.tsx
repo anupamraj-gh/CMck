@@ -21,6 +21,7 @@ import {
 } from '@/components/decor/Doodles'
 import { PageTab } from '@/components/decor/PageTab'
 import { SITE_CONFIG, CONTENT, fillTemplate } from '@/config/content'
+import { DURATION, EASE } from '@/lib/motion'
 
 const featureIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   leaf: Leaf,
@@ -50,7 +51,7 @@ export function AboutSection() {
             initial={{ opacity: 0, x: -24, rotate: -1 }}
             whileInView={{ opacity: 1, x: 0, rotate: -1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: DURATION.slow, ease: EASE.entrance }}
             className="relative ruled-paper ruled-paper-margin craft-shadow-lg rounded-sm p-8 sm:p-10 pl-16 sm:pl-20"
           >
             <NotebookHoles count={6} className="absolute left-4 sm:left-6 top-10 bottom-10" />
