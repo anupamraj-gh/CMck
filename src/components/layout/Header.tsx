@@ -7,6 +7,7 @@ import { DURATION, EASE } from '@/lib/motion'
 import { ScribbleUnderline } from '@/components/decor/Doodles'
 import { useCartStore } from '@/store/cartStore'
 import { SITE_CONFIG, CONTENT } from '@/config/content'
+import { withBase } from '@/lib/utils'
 import logo from '@/assets/logo-tophat.png'
 
 export function Header() {
@@ -30,7 +31,7 @@ export function Header() {
             {navLinks.map((link) => (
               <a
                 key={link.to}
-                href={link.to}
+                href={withBase(link.to)}
                 className="group relative px-3.5 py-2 rounded-full text-sm font-bold text-ink-soft hover:text-ink hover:bg-purple/40 transition-colors"
               >
                 {link.label}
@@ -86,7 +87,7 @@ export function Header() {
             {navLinks.map((link) => (
               <a
                 key={link.to}
-                href={link.to}
+                href={withBase(link.to)}
                 onClick={() => setMobileOpen(false)}
                 className="block px-6 py-3.5 text-sm font-bold text-ink-soft hover:text-ink hover:bg-purple/30 border-b border-ink-faint/15 last:border-0"
               >

@@ -9,7 +9,7 @@ import { useTraySheetStore } from '@/store/traySheetStore'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { PaperSettleValue } from '@/components/craft/PaperSettleValue'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, withBase } from '@/lib/utils'
 import { triggerHaptic } from '@/lib/haptics'
 import { SITE_CONFIG } from '@/config/content'
 import { EDITORIAL_STRINGS } from '@/config/editorialStrings'
@@ -126,7 +126,7 @@ export function KitchenTraySheet() {
                     <p className="font-hand text-2xl text-ink">{EDITORIAL_STRINGS.kitchenTrayWaiting}</p>
                     <p className="text-sm text-ink-soft max-w-xs">Add your favourite dishes to begin.</p>
                     <Button variant="coral" asChild>
-                      <a href="/#menu" onClick={close}>Browse Menu</a>
+                      <a href={withBase('/#menu')} onClick={close}>Browse Menu</a>
                     </Button>
                   </div>
                 ) : (

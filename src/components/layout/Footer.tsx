@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { MessageCircle, Mail, Camera } from 'lucide-react'
 import { SITE_CONFIG, CONTENT } from '@/config/content'
+import { withBase } from '@/lib/utils'
 
 const footer = CONTENT.footer
 import {
@@ -76,7 +77,7 @@ export function Footer() {
             <ul className="space-y-2.5 text-sm text-cream/60">
               {footer.quickLinks.map((link) => (
                 <li key={link.href}>
-                  <a href={link.href} className="hover:text-butter transition-colors">{link.label}</a>
+                  <a href={withBase(link.href)} className="hover:text-butter transition-colors">{link.label}</a>
                 </li>
               ))}
               <li><a href={`mailto:${SITE_CONFIG.supportEmail}`} className="hover:text-butter transition-colors">Contact</a></li>

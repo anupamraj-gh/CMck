@@ -8,7 +8,9 @@ import { CheckoutPage } from '@/pages/CheckoutPage'
 export default function App() {
   return (
     <MotionConfig reducedMotion="user">
-      <BrowserRouter>
+      {/* Must match vite.config.ts's `base` — GitHub Pages serves this site from /CMck/, not
+          the domain root, so client-side route links need the same prefix. */}
+      <BrowserRouter basename="/CMck">
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
