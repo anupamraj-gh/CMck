@@ -5,14 +5,14 @@
     <title>Craving Manager</title>
     <!--
       GitHub Pages has no server-side rewrites, so a direct load or refresh of a client-side
-      route (e.g. /CMck/product/1) 404s and GitHub serves this file instead. This redirects
-      back to index.html with the intended path packed into a query string; the matching
-      decode script in index.html unpacks it via history.replaceState before React Router
-      reads the URL, so the app still lands on the right page.
+      route (e.g. cravingmanager.com/product/1) 404s and GitHub serves this file instead. This
+      redirects back to index.html with the intended path packed into a query string; the
+      matching decode script in index.html unpacks it via history.replaceState before React
+      Router reads the URL, so the app still lands on the right page.
       Standard pattern: https://github.com/rafgraph/spa-github-pages
     -->
     <script type="text/javascript">
-      var pathSegmentsToKeep = 1 // keep "/CMck" — this is a project page, not a user/org page
+      var pathSegmentsToKeep = 0 // custom domain serves from the root — no path segment to keep
       var l = window.location
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +

@@ -4,9 +4,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  // GitHub Pages serves this site from https://anupamraj-gh.github.io/CMck/, not the domain
-  // root — every built asset reference needs that subpath prefix or they 404.
-  base: '/CMck/',
+  // Served from the custom domain root (cravingmanager.com/CNAME), not a GitHub Pages subpath
+  // — so base stays '/'. If the custom domain is ever removed, this needs to go back to
+  // '/CMck/' (see git history) or the site reverts to the same blank-page bug.
+  base: '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
