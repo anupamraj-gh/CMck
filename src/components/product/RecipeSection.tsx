@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
-import { ListOrdered, Flame, UtensilsCrossed } from 'lucide-react'
+import { UtensilsCrossed } from 'lucide-react'
 import type { Product } from '@/types'
-import { PaperCard } from '@/components/craft/PaperCard'
+// import { PaperCard } from '@/components/craft/PaperCard'
 import { NotebookHoles, ScribbleUnderline, PaperClip } from '@/components/decor/Doodles'
 
 interface RecipeSectionProps {
