@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { UtensilsCrossed } from 'lucide-react'
 import type { Product } from '@/types'
 // import { PaperCard } from '@/components/craft/PaperCard'
-import { NotebookHoles, ScribbleUnderline, PaperClip } from '@/components/decor/Doodles'
+import { NotebookHoles, ScribbleUnderline } from '@/components/decor/Doodles'
 
 interface RecipeSectionProps {
   product: Product
