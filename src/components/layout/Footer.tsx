@@ -80,7 +80,16 @@ export function Footer() {
                   <a href={withBase(link.href)} className="hover:text-butter transition-colors">{link.label}</a>
                 </li>
               ))}
-              <li><a href={`mailto:${SITE_CONFIG.supportEmail}`} className="hover:text-butter transition-colors">Contact</a></li>
+              <li>
+                <a
+                  href="https://api.whatsapp.com/send/?phone=919470322704&text&type=phone_number&app_absent=0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-butter transition-colors"
+                >
+                  Contact
+                </a>
+              </li>
               <li><Link to="/checkout" className="hover:text-butter transition-colors">{EDITORIAL_STRINGS.sendToKitchen}</Link></li>
             </ul>
           </div>
@@ -107,7 +116,9 @@ export function Footer() {
                 <Mail className="h-[18px] w-[18px]" />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/cravingmanager?evlk=MXU1Mnk4aG85eHRydw=="
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label="Instagram"
                 className="h-10 w-10 rounded-full bg-cream/10 flex items-center justify-center text-cream/80 hover:bg-butter hover:text-ink transition-colors"
               >
