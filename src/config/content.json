@@ -255,7 +255,6 @@
           "id": "base-flavor",
           "label": "Base Flavor",
           "type": "radio",
-          "required": true,
           "options": [
             { "id": "chocolate", "label": "Rich Chocolate", "priceModifier": 0 },
             { "id": "vanilla", "label": "Madagascar Vanilla", "priceModifier": 0 },
@@ -357,7 +356,6 @@
           "id": "flavor",
           "label": "Base Flavor",
           "type": "radio",
-          "required": true,
           "options": [
             { "id": "chocolate", "label": "Dark Chocolate", "priceModifier": 0 },
             { "id": "peanut", "label": "Peanut Butter", "priceModifier": 0 },
@@ -378,7 +376,6 @@
           "id": "size",
           "label": "Size",
           "type": "radio",
-          "required": true,
           "options": [
             { "id": "regular", "label": "Regular (60g)", "priceModifier": 0 },
             { "id": "large", "label": "Large (90g)", "priceModifier": 50 }
@@ -437,7 +434,6 @@
           "id": "cheese",
           "label": "Cheese",
           "type": "radio",
-          "required": true,
           "options": [
             { "id": "cheddar", "label": "Aged Cheddar", "priceModifier": 0 },
             { "id": "swiss", "label": "Swiss", "priceModifier": 20 },
@@ -518,7 +514,6 @@
           "id": "sweetness",
           "label": "Sweetness Level",
           "type": "select",
-          "required": true,
           "options": [
             { "id": "regular", "label": "Regular", "priceModifier": 0 },
             { "id": "less-sweet", "label": "Less Sweet", "priceModifier": 0 }
@@ -528,7 +523,6 @@
           "id": "quantity",
           "label": "Box Size",
           "type": "radio",
-          "required": true,
           "options": [
             { "id": "6", "label": "6 Cookies", "priceModifier": 0 },
             { "id": "12", "label": "12 Cookies", "priceModifier": 250 },
@@ -577,7 +571,6 @@
           "id": "base",
           "label": "Base Flavor",
           "type": "radio",
-          "required": true,
           "options": [
             { "id": "acai", "label": "Classic Acai", "priceModifier": 0 },
             { "id": "mango", "label": "Mango Passion", "priceModifier": 30 },
@@ -598,7 +591,6 @@
           "id": "size",
           "label": "Size",
           "type": "radio",
-          "required": true,
           "options": [
             { "id": "regular", "label": "Regular", "priceModifier": 0 },
             { "id": "large", "label": "Large", "priceModifier": 80 }
