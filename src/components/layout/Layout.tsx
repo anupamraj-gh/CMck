@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useLocation, useOutlet } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Header } from './Header'
@@ -25,6 +26,40 @@ export function Layout() {
   const isSheetOpen = useTraySheetStore((s) => s.isOpen)
   const location = useLocation()
   const outlet = useOutlet()
+
+  useEffect(() => {
+    if (!location.hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      return
+    }
+
+    const elementId = decodeURIComponent(location.hash.slice(1))
+    let attempts = 0
+    let frame = 0
+
+    const tryScroll = () => {
+      const target = document.getElementById(elementId)
+      if (target) {
+        target.scrollIntoView({ block: 'start', behavior: 'auto' })
+      } else if (attempts < 30) {
+        attempts += 1
+        frame = window.requestAnimationFrame(tryScroll)
+      }
+    }
+
+    frame = window.requestAnimationFrame(tryScroll)
+
+    const settleTimers = [50, 150, 300].map((delay) =>
+      window.setTimeout(() => {
+        document.getElementById(elementId)?.scrollIntoView({ block: 'start', behavior: 'auto' })
+      }, delay),
+    )
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      settleTimers.forEach((timer) => window.clearTimeout(timer))
+    }
+  }, [location.pathname, location.hash])
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -123,7 +123,7 @@ function QuickAddControl({
     } else if (requiresCustomizer) {
       // Some required choice here has no safe default (e.g. "pick at least one" checkbox
       // group) — never guess. Send them to the full customizer instead of instant-adding.
-      navigate(`/product/${product.id}`)
+      navigate(`/product/${product.id}#customize`)
       return
     } else {
       setWasFirstItem(items.length === 0)
@@ -283,7 +283,7 @@ function FeaturedCard({ product, index, rotate }: CardProps) {
           Chef&apos;s Special
         </span>
 
-        <Link to={`/product/${product.id}`} className="block relative rounded-md border-2 border-dashed border-ink-faint/60 p-2 bg-lavender/40">
+        <Link to={`/product/${product.id}#customize`} className="block relative rounded-md border-2 border-dashed border-ink-faint/60 p-2 bg-lavender/40">
           <div className="relative overflow-hidden rounded bg-lavender-deep aspect-[4/3]">
             {product.image ? (
               <img
@@ -298,7 +298,7 @@ function FeaturedCard({ product, index, rotate }: CardProps) {
         </Link>
 
         <div className="pt-5 lg:pt-0 flex flex-col">
-          <Link to={`/product/${product.id}`} className="block">
+          <Link to={`/product/${product.id}#customize`} className="block">
             <h3 className="font-serif font-semibold text-ink leading-snug group-hover:text-coral-deep transition-colors duration-fast ease-hover mb-1.5 text-2xl sm:text-3xl">
               {product.name}
             </h3>
@@ -308,7 +308,7 @@ function FeaturedCard({ product, index, rotate }: CardProps) {
           <div className="flex items-center justify-between mt-auto gap-3 pr-14 sm:pr-0">
             <QuickAddControl product={product} fullLabel />
             <Link
-              to={`/product/${product.id}`}
+              to={`/product/${product.id}#customize`}
               className="text-sm font-bold text-ink-soft hover:text-coral-deep transition-colors duration-fast ease-hover inline-flex items-center gap-1 shrink-0"
             >
               {productGridContent.customizeLabel}
@@ -355,7 +355,7 @@ function RecipeCard({ product, index, rotate, bestseller = false, compact = fals
           width={76}
         />
 
-        <Link to={`/product/${product.id}`} className="block relative rounded-md border-2 border-dashed border-ink-faint/60 p-2 bg-lavender/40">
+        <Link to={`/product/${product.id}#customize`} className="block relative rounded-md border-2 border-dashed border-ink-faint/60 p-2 bg-lavender/40">
           <div className={`relative overflow-hidden rounded bg-lavender-deep ${compact ? 'aspect-square' : 'aspect-[4/3]'}`}>
             {product.image ? (
               <img
@@ -374,7 +374,7 @@ function RecipeCard({ product, index, rotate, bestseller = false, compact = fals
         </span>
 
         <div className="pt-4 px-1 flex flex-col flex-1">
-          <Link to={`/product/${product.id}`} className="block">
+          <Link to={`/product/${product.id}#customize`} className="block">
             <h3 className={`font-serif font-semibold text-ink leading-snug group-hover:text-coral-deep transition-colors duration-fast ease-hover mb-1 ${compact ? 'text-base' : 'text-lg'}`}>
               {product.name}
             </h3>
@@ -384,7 +384,7 @@ function RecipeCard({ product, index, rotate, bestseller = false, compact = fals
           <div className={`flex items-center justify-between mt-auto pt-3 gap-2 ${compact ? 'pr-9' : 'pr-14 sm:pr-0'}`}>
             <QuickAddControl product={product} compact={compact} />
             <Link
-              to={`/product/${product.id}`}
+              to={`/product/${product.id}#customize`}
               aria-label={compact ? productGridContent.customizeLabel : undefined}
               className="text-xs font-bold text-ink-soft hover:text-coral-deep transition-colors duration-fast ease-hover inline-flex items-center gap-1 shrink-0"
             >
@@ -459,7 +459,7 @@ export function ProductGrid() {
 
           {chefsRecommendation && (
             <div className="flex justify-end max-sm:-mt-8 lg:absolute lg:-bottom-6 lg:right-4">
-              <Link to={`/product/${chefsRecommendation.id}`} className="block">
+              <Link to={`/product/${chefsRecommendation.id}#customize`} className="block">
                 <StickyNote color="butter" rotate={-3} className="w-60 sm:w-64">
                   <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink/70 mb-1.5">
                     Chef Recommends

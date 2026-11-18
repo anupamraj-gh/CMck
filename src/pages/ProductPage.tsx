@@ -66,6 +66,38 @@ export function ProductPage() {
     setToastMessage(null)
   }, [])
 
+  useEffect(() => {
+    if (!window.location.hash) return
+
+    const elementId = decodeURIComponent(window.location.hash.slice(1))
+    let frame = 0
+    let attempts = 0
+
+    const scrollToCustomizer = () => {
+      const target = document.getElementById(elementId)
+      if (target) {
+        const top = target.getBoundingClientRect().top + window.scrollY
+        window.scrollTo({ top: Math.max(0, top - 96), left: 0, behavior: 'auto' })
+        return
+      }
+
+      if (attempts < 60) {
+        attempts += 1
+        frame = window.requestAnimationFrame(scrollToCustomizer)
+      }
+    }
+
+    frame = window.requestAnimationFrame(scrollToCustomizer)
+    const timers = [100, 250, 500, 900].map((delay) =>
+      window.setTimeout(scrollToCustomizer, delay),
+    )
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      timers.forEach((timer) => window.clearTimeout(timer))
+    }
+  }, [id])
+
   if (!product) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">

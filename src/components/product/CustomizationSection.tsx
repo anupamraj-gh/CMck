@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CustomizationGroupCard } from '@/components/product/CustomizationGroupCard'
 import { CustomizationOptionsList } from '@/components/product/CustomizationOptionsList'
@@ -39,6 +39,31 @@ export function CustomizationSection({
   const disclosure = useProgressiveCustomization(groups, selections)
   const { markTouched } = disclosure
 
+  useEffect(() => {
+    if (window.location.hash !== '#customize') return
+
+    const root = document.documentElement
+    const previousScrollBehavior = root.style.scrollBehavior
+    root.style.scrollBehavior = 'auto'
+
+    const scrollToCustomizer = () => {
+      const target = document.getElementById('customize')
+      if (!target) return
+
+      const top = target.getBoundingClientRect().top + window.scrollY - 96
+      window.scrollTo({ top: Math.max(0, top), left: 0, behavior: 'auto' })
+    }
+
+    const frame = window.requestAnimationFrame(scrollToCustomizer)
+    const timers = [100, 250, 500].map((delay) => window.setTimeout(scrollToCustomizer, delay))
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      timers.forEach((timer) => window.clearTimeout(timer))
+      root.style.scrollBehavior = previousScrollBehavior
+    }
+  }, [])
+
   // Stable across renders (as long as `onSelectionChange` itself is, which ProductPage guarantees
   // via its own useCallback) so the memoized CustomizationOptionsList below can actually bail out
   // for every group except the one the customer just changed.
@@ -51,7 +76,7 @@ export function CustomizationSection({
   )
 
   return (
-    <section className="py-16 sm:py-24">
+    <section id="customize" className="py-16 sm:py-24 scroll-mt-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
