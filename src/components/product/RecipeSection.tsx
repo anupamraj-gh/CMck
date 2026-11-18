@@ -41,7 +41,7 @@ export function RecipeSection({ product }: RecipeSectionProps) {
             </ul>
           </motion.div>
 
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, y: 20, rotate: 1 }}
             whileInView={{ opacity: 1, y: 0, rotate: 1 }}
             viewport={{ once: true }}
@@ -61,10 +61,10 @@ export function RecipeSection({ product }: RecipeSectionProps) {
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </motion.div> */}
         </div>
 
-        <div className="mb-14">
+        {/* <div className="mb-14">
           <div className="flex items-center gap-3 mb-8 justify-center">
             <ListOrdered className="h-6 w-6 text-coral-deep" />
             <h3 className="font-serif text-2xl font-semibold text-ink">Preparation Steps</h3>
@@ -87,7 +87,7 @@ export function RecipeSection({ product }: RecipeSectionProps) {
               </PaperCard>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {product.servingSuggestions && (
           <motion.div
