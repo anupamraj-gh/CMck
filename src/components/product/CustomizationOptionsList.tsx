@@ -88,9 +88,15 @@ export const CustomizationOptionsList = memo(function CustomizationOptionsList({
                   id={`${group.id}-${option.id}`}
                   checked={isChecked}
                   onCheckedChange={(checked) => {
-                    const updated = checked
-                      ? [...selected, option.id]
-                      : selected.filter((id) => id !== option.id)
+                    let updated: string[]
+                    if (checked && option.id === 'none') {
+                      updated = ['none']
+                    } else if (checked) {
+                      updated = [...selected.filter((id) => id !== 'none'), option.id]
+                    } else {
+                      updated = selected.filter((id) => id !== option.id)
+                      if (updated.length === 0) updated = ['none']
+                    }
                     onChange(group.id, updated)
                   }}
                 />

@@ -184,7 +184,8 @@ export function buildDefaultSelections(
   const selections: Record<string, string | string[]> = {}
   for (const group of groups) {
     if (group.type === 'checkbox') {
-      selections[group.id] = []
+      const noneOption = group.options.find((option) => option.id === 'none')
+      selections[group.id] = noneOption ? [noneOption.id] : []
     } else if (group.options.length > 0) {
       selections[group.id] = group.options[0].id
     }

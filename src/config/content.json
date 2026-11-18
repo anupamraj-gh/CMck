@@ -267,7 +267,6 @@
           "id": "frosting",
           "label": "Frosting",
           "type": "radio",
-          "required": true,
           "options": [
             { "id": "buttercream", "label": "Classic Buttercream", "priceModifier": 0 },
             { "id": "cream-cheese", "label": "Cream Cheese", "priceModifier": 50 },
@@ -279,6 +278,7 @@
           "label": "Toppings",
           "type": "checkbox",
           "options": [
+            { "id": "none", "label": "None", "priceModifier": 0 },
             { "id": "berries", "label": "Fresh Berries", "priceModifier": 80 },
             { "id": "nuts", "label": "Roasted Almonds", "priceModifier": 60 },
             { "id": "gold-dust", "label": "Edible Gold Dust", "priceModifier": 150 }
@@ -288,7 +288,6 @@
           "id": "size",
           "label": "Size",
           "type": "radio",
-          "required": true,
           "options": [
             { "id": "small", "label": "6 inch (6-8 servings)", "priceModifier": 0 },
             { "id": "medium", "label": "8 inch (10-12 servings)", "priceModifier": 300 },
@@ -299,7 +298,6 @@
           "id": "sweetness",
           "label": "Sweetness Level",
           "type": "select",
-          "required": true,
           "options": [
             { "id": "regular", "label": "Regular", "priceModifier": 0 },
             { "id": "less-sweet", "label": "Less Sweet", "priceModifier": 0 },
