@@ -121,8 +121,7 @@ export function Footer() {
                 rel="noopener noreferrer"
                 aria-label="Instagram"
                 className="h-10 w-10 rounded-full bg-cream/10 flex items-center justify-center text-cream/80 hover:bg-butter hover:text-ink transition-colors"
-              >
-                <Camera className="h-[18px] w-[18px]" />
+              ><Camera className="h-[18px] w-[18px]" />
               </a>
             </div>
 
