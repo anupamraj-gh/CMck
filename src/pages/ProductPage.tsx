@@ -142,11 +142,11 @@ export function ProductPage() {
         </Button>
       </div>
 
-      <RecipeVideo
+      {/* <RecipeVideo
         videoUrl={product.videoUrl}
         poster={product.videoPoster}
         productName={product.name}
-      />
+      /> */}
       <ProductHero ref={heroRef} product={product} />
       <CustomizationSection
         key={product.id}
