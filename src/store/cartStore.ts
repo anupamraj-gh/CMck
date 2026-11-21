@@ -24,13 +24,10 @@ interface CartState {
 const emptyCustomer: CustomerInfo = {
   fullName: '',
   mobileNumber: '',
-  houseFlat: '',
-  street: '',
-  area: '',
-  city: '',
-  state: '',
+  address: '',
   pinCode: '',
-  landmark: '',
+  googleLocation: '',
+  googleLocationDrivingDistanceMeters: null,
 }
 
 const emptyDelivery: DeliveryInfo = {
@@ -101,6 +98,16 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'craving-manager-cart',
+      // Add newly introduced customer fields when restoring older saved carts.
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<CartState> | undefined
+        return {
+          ...currentState,
+          ...persisted,
+          customer: { ...emptyCustomer, ...persisted?.customer },
+          delivery: { ...emptyDelivery, ...persisted?.delivery },
+        }
+      },
     },
   ),
 )

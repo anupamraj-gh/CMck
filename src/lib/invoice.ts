@@ -39,17 +39,18 @@ export function generateInvoicePdf(order: Order): jsPDF {
   doc.text(`${order.customer.fullName} | ${order.customer.mobileNumber}`, 20, y)
 
   y += 6
-  const address = [
-    order.customer.houseFlat,
-    order.customer.street,
-    order.customer.area,
-    `${order.customer.city}, ${order.customer.state} - ${order.customer.pinCode}`,
-  ]
-    .filter(Boolean)
-    .join(', ')
-  doc.text(address, 20, y, { maxWidth: pageWidth - 40 })
-
-  y += 12
+  doc.text('Address:', 20, y)
+  y += 5
+  const addressLines = doc.splitTextToSize(order.customer.address, pageWidth - 40)
+  doc.text(addressLines, 20, y)
+  y += addressLines.length * 5 + 1
+  doc.text(`PIN Code: ${order.customer.pinCode}`, 20, y)
+  y += 6
+  doc.text('Google Location:', 20, y)
+  y += 5
+  const locationLines = doc.splitTextToSize(order.customer.googleLocation ?? '', pageWidth - 40)
+  doc.text(locationLines, 20, y)
+  y += locationLines.length * 5 + 6
   doc.setTextColor(26, 26, 26)
   doc.setFontSize(12)
   doc.text('Delivery Schedule', 20, y)

@@ -14,6 +14,7 @@ import { useCartStore } from '@/store/cartStore'
 import { formatCurrency, generateOrderId } from '@/lib/utils'
 import { downloadInvoice } from '@/lib/invoice'
 import { redirectToWhatsApp } from '@/lib/whatsapp'
+import { isWithinDeliveryArea } from '@/lib/deliveryArea'
 import { EDITORIAL_STRINGS } from '@/config/editorialStrings'
 import type { CustomerInfo, DeliveryInfo, Order } from '@/types'
 
@@ -28,13 +29,14 @@ function getCustomerFieldErrors(customer: CustomerInfo): Partial<Record<keyof Cu
   if (!customer.mobileNumber.trim() || !/^\d{10}$/.test(customer.mobileNumber.replace(/\s/g, ''))) {
     errors.mobileNumber = 'Enter a valid 10-digit mobile number'
   }
-  if (!customer.houseFlat.trim()) errors.houseFlat = 'Please fill this in'
-  if (!customer.street.trim()) errors.street = 'Please fill this in'
-  if (!customer.area.trim()) errors.area = 'Please fill this in'
-  if (!customer.city.trim()) errors.city = 'Please fill this in'
-  if (!customer.state.trim()) errors.state = 'Please fill this in'
+  if (!customer.address.trim()) errors.address = 'Please enter your delivery address'
   if (!customer.pinCode.trim() || !/^\d{6}$/.test(customer.pinCode)) {
     errors.pinCode = 'Enter a valid 6-digit PIN'
+  }
+  if (!customer.googleLocation?.trim()) {
+    errors.googleLocation = 'Please choose your location on the map'
+  } else if (!isWithinDeliveryArea(customer.googleLocation, customer.googleLocationDrivingDistanceMeters)) {
+    errors.googleLocation = 'Delivery is available only within 15 km by road from Udupi Garden, BTM 1st Stage. Please reselect your location.'
   }
   return errors
 }
@@ -145,6 +147,14 @@ export function CheckoutPage() {
     (field: keyof CustomerInfo, value: string) => {
       setCustomer({ ...customer, [field]: value })
       setCustomerErrors((prev) => ({ ...prev, [field]: undefined }))
+    },
+    [customer, setCustomer],
+  )
+
+  const handleLocationSelect = useCallback(
+    (googleLocation: string, googleLocationDrivingDistanceMeters: number) => {
+      setCustomer({ ...customer, googleLocation, googleLocationDrivingDistanceMeters })
+      setCustomerErrors((prev) => ({ ...prev, googleLocation: undefined }))
     },
     [customer, setCustomer],
   )
@@ -262,6 +272,7 @@ export function CheckoutPage() {
               customer={customer}
               errors={customerErrors}
               onChange={handleCustomerChange}
+              onLocationSelect={handleLocationSelect}
               onBlur={handleCustomerBlur}
             />
             <Button

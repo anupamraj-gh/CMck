@@ -13,15 +13,11 @@ export function buildWhatsAppMessage(order: Order): string {
     `Name: ${order.customer.fullName}`,
     `Phone: ${order.customer.mobileNumber}`,
     '',
-    '📍 *Delivery Address*',
-    `${order.customer.houseFlat}, ${order.customer.street}`,
-    `${order.customer.area}, ${order.customer.city}`,
-    `${order.customer.state} - ${order.customer.pinCode}`,
+    '📍 *Delivery Location*',
+    `Address: ${order.customer.address}`,
+    `PIN Code: ${order.customer.pinCode}`,
+    `Google Location: ${order.customer.googleLocation ?? ''}`,
   ]
-
-  if (order.customer.landmark) {
-    lines.push(`Landmark: ${order.customer.landmark}`)
-  }
 
   lines.push(
     '',

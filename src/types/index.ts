@@ -66,13 +66,10 @@ export interface CartItem {
 export interface CustomerInfo {
   fullName: string
   mobileNumber: string
-  houseFlat: string
-  street: string
-  area: string
-  city: string
-  state: string
+  address: string
   pinCode: string
-  landmark: string
+  googleLocation: string
+  googleLocationDrivingDistanceMeters: number | null
 }
 
 export interface DeliveryInfo {
