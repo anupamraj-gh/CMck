@@ -32,7 +32,7 @@
   },
   "hero": {
     "pageLabel": "Page 01",
-    "badgeText": "chef's note: made fresh, never frozen ✓",
+    "badgeText": "chef's note: made fresh ✓",
     "headline": "Where Every Craving\nFinds Its Perfect Match.",
     "todaysSpecial": ["Freshly Cooked", "Premium Ingredients", "On-Time Delivery", "Hygienic Kitchen"],
     "ctaPrimaryLabel": "Order Now",
@@ -216,11 +216,11 @@
   },
   "products": [
     {
-      "id": "artisan-cake",
-      "name": "Artisan Celebration Cake",
-      "shortDescription": "Layers of velvety sponge with handcrafted frosting",
-      "description": "Our signature celebration cake is baked fresh daily using premium Belgian chocolate, farm-fresh eggs, and organic flour. Each layer is hand-frosted with our secret recipe buttercream.",
-      "basePrice": 899,
+      "id": "tiramisu",
+      "name": "Signature Tiramisu",
+      "shortDescription": "Crafted with pure honey for deeper flavor.",
+      "description": "Our signature tiramisu are freshly prepared only after you place your order, so you receive them fresh from our kitchen.",
+      "basePrice": 345,
       "image": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=80",
       "heroImage": "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=1200&q=80",
       "videoUrl": "https://videos.pexels.com/video-files/20685100/20685100-uhd_2560_1440_25fps.mp4",
@@ -230,13 +230,15 @@
       "rating": 4.9,
       "reviewCount": 128,
       "ingredients": [
-        "Organic all-purpose flour",
-        "Farm-fresh eggs",
-        "Belgian dark chocolate",
-        "Pure vanilla extract",
-        "Fresh cream butter",
-        "Organic cane sugar",
-        "Fresh seasonal fruits"
+        "Milk",
+        "Butter",
+        "Honey",
+        "Coffee",
+        "Milk Powder",
+        "Cocoa Powder",
+        "Vanilla Essence",
+        "Homemade Whiped Cream",
+        "Homemade Mascarpone Cheese"
       ],
       "preparationSteps": [
         { "step": 1, "title": "Prepare the Batter", "description": "Cream butter and sugar until light and fluffy. Add eggs one at a time, then fold in sifted flour and cocoa." },
