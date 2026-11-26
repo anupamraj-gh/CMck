@@ -2,11 +2,31 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Circle, MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
+import { importLibrary, setOptions } from '@googlemaps/js-api-loader'
 import { LocateFixed, LoaderCircle, MapPin, Search, X } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 import { DELIVERY_RADIUS_METERS, distanceInMeters, getDrivingDistanceMeters, getGoogleMapsCoordinates, OUTLET_LOCATION } from '@/lib/deliveryArea'
 
 type Coordinates = [number, number]
+type MapProvider = 'google' | 'leaflet'
+
+declare global {
+  interface Window {
+    gm_authFailure?: () => void
+  }
+}
+
+const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim() ?? ''
+let googleMapsLoadPromise: Promise<void> | null = null
+
+function loadGoogleMaps(apiKey: string): Promise<void> {
+  if (typeof google !== 'undefined' && google.maps?.Map) return Promise.resolve()
+  if (!googleMapsLoadPromise) {
+    setOptions({ key: apiKey, v: 'weekly' })
+    googleMapsLoadPromise = importLibrary('maps').then(() => undefined)
+  }
+  return googleMapsLoadPromise
+}
 
 interface PlaceSearchResult {
   id: string
@@ -53,6 +73,136 @@ function RecenterMap({ center, zoom }: { center: Coordinates; zoom: number }) {
   return null
 }
 
+interface GoogleMapViewProps {
+  center: Coordinates
+  selected: Coordinates | null
+  onSelect: (coordinates: Coordinates) => void
+  onReady: () => void
+  onError: () => void
+}
+
+function GoogleMapView({ center, selected, onSelect, onReady, onError }: GoogleMapViewProps) {
+  const mapElement = useRef<HTMLDivElement>(null)
+  const map = useRef<google.maps.Map | null>(null)
+  const marker = useRef<google.maps.Marker | null>(null)
+  const centerRef = useRef(center)
+  const selectedRef = useRef(selected)
+  const onSelectRef = useRef(onSelect)
+  const onReadyRef = useRef(onReady)
+  const onErrorRef = useRef(onError)
+
+  centerRef.current = center
+  selectedRef.current = selected
+  onSelectRef.current = onSelect
+  onReadyRef.current = onReady
+  onErrorRef.current = onError
+
+  useEffect(() => {
+    const element = mapElement.current
+    if (!element) return
+
+    let active = true
+    let clickListener: google.maps.MapsEventListener | null = null
+    let outletMarker: google.maps.Marker | null = null
+    let deliveryArea: google.maps.Circle | null = null
+    const previousAuthFailure = window.gm_authFailure
+    window.gm_authFailure = () => {
+      previousAuthFailure?.()
+      if (active) onErrorRef.current()
+    }
+
+    void loadGoogleMaps(googleMapsApiKey).then(() => {
+      if (!active) return
+      const initialCenter = centerRef.current
+      const initialSelected = selectedRef.current
+
+      const googleMap = new google.maps.Map(element, {
+        center: { lat: initialCenter[0], lng: initialCenter[1] },
+        zoom: initialSelected ? 15 : 12,
+        clickableIcons: false,
+        fullscreenControl: false,
+        mapTypeControl: false,
+        streetViewControl: false,
+      })
+      map.current = googleMap
+      outletMarker = new google.maps.Marker({
+        map: googleMap,
+        position: { lat: OUTLET_LOCATION[0], lng: OUTLET_LOCATION[1] },
+        title: 'Udupi Garden outlet',
+      })
+      deliveryArea = new google.maps.Circle({
+        map: googleMap,
+        center: { lat: OUTLET_LOCATION[0], lng: OUTLET_LOCATION[1] },
+        radius: DELIVERY_RADIUS_METERS,
+        strokeColor: '#c26e58',
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        fillColor: '#d98a76',
+        fillOpacity: 0.12,
+      })
+      clickListener = googleMap.addListener('click', (event: google.maps.MapMouseEvent) => {
+        if (event.latLng) onSelectRef.current([event.latLng.lat(), event.latLng.lng()])
+      })
+      if (initialSelected) {
+        marker.current = new google.maps.Marker({
+          map: googleMap,
+          position: { lat: initialSelected[0], lng: initialSelected[1] },
+          title: 'Selected delivery location',
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 9,
+            fillColor: '#c26e58',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 3,
+          },
+        })
+      }
+      onReadyRef.current()
+    }).catch(() => {
+      if (active) onErrorRef.current()
+    })
+
+    return () => {
+      active = false
+      window.gm_authFailure = previousAuthFailure
+      clickListener?.remove()
+      outletMarker?.setMap(null)
+      deliveryArea?.setMap(null)
+      marker.current?.setMap(null)
+      marker.current = null
+      map.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!map.current) return
+    map.current.setCenter({ lat: center[0], lng: center[1] })
+    map.current.setZoom(selected ? 15 : 12)
+
+    if (selected) {
+      marker.current ??= new google.maps.Marker({
+        map: map.current,
+        title: 'Selected delivery location',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 9,
+          fillColor: '#c26e58',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 3,
+        },
+      })
+      marker.current.setPosition({ lat: selected[0], lng: selected[1] })
+    } else {
+      marker.current?.setMap(null)
+      marker.current = null
+    }
+  }, [center, selected])
+
+  return <div ref={mapElement} className="h-full w-full" aria-label="Google Maps delivery location picker" />
+}
+
 interface GoogleLocationPickerProps {
   value: string
   drivingDistanceMeters: number | null
@@ -61,6 +211,11 @@ interface GoogleLocationPickerProps {
 }
 
 export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, onClose }: GoogleLocationPickerProps) {
+  const [mapProvider, setMapProvider] = useState<MapProvider>(googleMapsApiKey ? 'google' : 'leaflet')
+  const [googleMapLoading, setGoogleMapLoading] = useState(!!googleMapsApiKey)
+  const [mapFallbackMessage, setMapFallbackMessage] = useState(
+    googleMapsApiKey ? '' : 'Google Maps API key is not configured; showing OpenStreetMap instead.',
+  )
   const savedCoordinates = getGoogleMapsCoordinates(value)
   const savedLocationIsInArea = savedCoordinates !== null
     && drivingDistanceMeters !== null
@@ -242,17 +397,39 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
         )}
 
         <div className="relative h-[40vh] min-h-52 shrink-0 sm:h-[min(50vh,460px)]">
-          <MapContainer center={center} zoom={selected ? 15 : 12} className="h-full w-full" scrollWheelZoom>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <MapClickHandler onSelect={selectMapLocation} />
-            <Circle center={OUTLET_LOCATION} radius={DELIVERY_RADIUS_METERS} pathOptions={{ color: '#c26e58', fillColor: '#d98a76', fillOpacity: 0.12, weight: 2 }} />
-            <Marker position={OUTLET_LOCATION} />
-            {selected && <Marker position={selected} icon={selectedMarker} />}
-            <RecenterMap center={center} zoom={selected ? 15 : 12} />
-          </MapContainer>
+          {mapProvider === 'google' ? (
+            <>
+              <GoogleMapView
+                center={center}
+                selected={selected}
+                onSelect={selectMapLocation}
+                onReady={() => setGoogleMapLoading(false)}
+                onError={() => {
+                  setMapProvider('leaflet')
+                  setGoogleMapLoading(false)
+                  setMapFallbackMessage('Google Maps could not be loaded; showing OpenStreetMap instead.')
+                }}
+              />
+              {googleMapLoading && (
+                <div className="absolute inset-0 z-[400] flex items-center justify-center gap-2 bg-paper/80 text-sm text-ink-soft">
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  Loading Google Maps...
+                </div>
+              )}
+            </>
+          ) : (
+            <MapContainer center={center} zoom={selected ? 15 : 12} className="h-full w-full" scrollWheelZoom>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <MapClickHandler onSelect={selectMapLocation} />
+              <Circle center={OUTLET_LOCATION} radius={DELIVERY_RADIUS_METERS} pathOptions={{ color: '#c26e58', fillColor: '#d98a76', fillOpacity: 0.12, weight: 2 }} />
+              <Marker position={OUTLET_LOCATION} />
+              {selected && <Marker position={selected} icon={selectedMarker} />}
+              <RecenterMap center={center} zoom={selected ? 15 : 12} />
+            </MapContainer>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -269,6 +446,7 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
 
         <footer className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="min-w-0 text-sm text-ink-soft" aria-live="polite">
+            {mapFallbackMessage && <p className="mb-1 text-xs text-coral-deep">{mapFallbackMessage}</p>}
             {isCheckingRoute ? (
               <span className="inline-flex items-center gap-1.5"><LoaderCircle className="h-4 w-4 animate-spin" /> Checking road distance...</span>
             ) : locationError ? (
