@@ -114,6 +114,15 @@ function RecenterMap({ center, zoom }: { center: Coordinates; zoom: number }) {
   return null
 }
 
+function addSelectedMarkerDragListener(
+  marker: google.maps.Marker,
+  onSelect: (coordinates: Coordinates) => void,
+): google.maps.MapsEventListener {
+  return marker.addListener('dragend', (event: google.maps.MapMouseEvent) => {
+    if (event.latLng) onSelect([event.latLng.lat(), event.latLng.lng()])
+  })
+}
+
 interface GoogleMapViewProps {
   center: Coordinates
   selected: Coordinates | null
@@ -126,6 +135,7 @@ function GoogleMapView({ center, selected, onSelect, onReady, onError }: GoogleM
   const mapElement = useRef<HTMLDivElement>(null)
   const map = useRef<google.maps.Map | null>(null)
   const marker = useRef<google.maps.Marker | null>(null)
+  const markerDragListener = useRef<google.maps.MapsEventListener | null>(null)
   const centerRef = useRef(center)
   const selectedRef = useRef(selected)
   const onSelectRef = useRef(onSelect)
@@ -189,6 +199,7 @@ function GoogleMapView({ center, selected, onSelect, onReady, onError }: GoogleM
           map: googleMap,
           position: { lat: initialSelected[0], lng: initialSelected[1] },
           title: 'Selected delivery location',
+          draggable: true,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 9,
@@ -198,6 +209,10 @@ function GoogleMapView({ center, selected, onSelect, onReady, onError }: GoogleM
             strokeWeight: 3,
           },
         })
+        markerDragListener.current = addSelectedMarkerDragListener(
+          marker.current,
+          (coordinates) => onSelectRef.current(coordinates),
+        )
       }
       onReadyRef.current()
     }).catch(() => {
@@ -208,6 +223,8 @@ function GoogleMapView({ center, selected, onSelect, onReady, onError }: GoogleM
       active = false
       window.gm_authFailure = previousAuthFailure
       clickListener?.remove()
+      markerDragListener.current?.remove()
+      markerDragListener.current = null
       outletMarker?.setMap(null)
       deliveryArea?.setMap(null)
       marker.current?.setMap(null)
@@ -225,6 +242,7 @@ function GoogleMapView({ center, selected, onSelect, onReady, onError }: GoogleM
       marker.current ??= new google.maps.Marker({
         map: map.current,
         title: 'Selected delivery location',
+        draggable: true,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 9,
@@ -234,8 +252,16 @@ function GoogleMapView({ center, selected, onSelect, onReady, onError }: GoogleM
           strokeWeight: 3,
         },
       })
+      if (!markerDragListener.current) {
+        markerDragListener.current = addSelectedMarkerDragListener(
+          marker.current,
+          (coordinates) => onSelectRef.current(coordinates),
+        )
+      }
       marker.current.setPosition({ lat: selected[0], lng: selected[1] })
     } else {
+      markerDragListener.current?.remove()
+      markerDragListener.current = null
       marker.current?.setMap(null)
       marker.current = null
     }
@@ -371,12 +397,19 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
   }, [mapProvider, searchQuery])
 
   const checkAndSelectLocation = async (coordinates: Coordinates, label: string) => {
+    const requestId = ++routeCheckId.current
+    setSelected(coordinates)
+    setSelectedDistance(null)
+    setSelectedLabel(label)
+    setCenter(coordinates)
+    setSearchResults([])
+
     if (distanceInMeters(OUTLET_LOCATION, coordinates) > DELIVERY_RADIUS_METERS) {
+      setIsCheckingRoute(false)
       setLocationError('This location is beyond the 15 km outer boundary from Udupi Garden.')
       return
     }
 
-    const requestId = ++routeCheckId.current
     setIsCheckingRoute(true)
     setLocationError('Checking driving distance from Udupi Garden...')
     const distance = await getDrivingDistanceMeters(coordinates)
@@ -392,11 +425,7 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
       return
     }
 
-    setSelected(coordinates)
     setSelectedDistance(distance)
-    setCenter(coordinates)
-    setSelectedLabel(label)
-    setSearchResults([])
     setLocationError('')
   }
 
@@ -417,10 +446,6 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
         const coordinates: Coordinates = [coords.latitude, coords.longitude]
         setIsLocating(false)
         setSearchResults([])
-        setSelected(null)
-        setSelectedDistance(null)
-        setSelectedLabel('')
-        setCenter(coordinates)
         void checkAndSelectLocation(coordinates, 'Current location')
       },
       (error) => {
@@ -457,7 +482,6 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
 
       const coordinates: Coordinates = [place.location.lat(), place.location.lng()]
       const label = place.formattedAddress ?? place.displayName ?? result.label
-      setCenter(coordinates)
       void checkAndSelectLocation(coordinates, label)
     } catch {
       setLocationError('Could not load this Google Maps place. Try another result.')
@@ -487,7 +511,7 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
         <header className="flex items-center justify-between gap-4 border-b border-ink/10 px-4 py-3 sm:px-6">
           <div>
             <h2 id="location-picker-title" className="font-serif text-xl font-bold text-ink">Choose your delivery location</h2>
-            <p className="mt-1 text-sm text-ink-soft">Every selection is checked for a driving route within 15 km of Udupi Garden, BTM 1st Stage.</p>
+            <p className="mt-1 text-sm text-ink-soft">Tap the map to place a pin, then drag it to adjust. Locations are checked for a driving route within 15 km of Udupi Garden, BTM 1st Stage.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close map" className="rounded-full p-2 text-ink-soft hover:bg-ink/5">
             <X className="h-5 w-5" />
@@ -562,7 +586,21 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
               <MapClickHandler onSelect={selectMapLocation} />
               <Circle center={OUTLET_LOCATION} radius={DELIVERY_RADIUS_METERS} pathOptions={{ color: '#c26e58', fillColor: '#d98a76', fillOpacity: 0.12, weight: 2 }} />
               <Marker position={OUTLET_LOCATION} />
-              {selected && <Marker position={selected} icon={selectedMarker} />}
+              {selected && (
+                <Marker
+                  position={selected}
+                  icon={selectedMarker}
+                  draggable
+                  eventHandlers={{
+                    dragend: (event) => {
+                      if (event.target instanceof L.Marker) {
+                        const { lat, lng } = event.target.getLatLng()
+                        selectMapLocation([lat, lng])
+                      }
+                    },
+                  }}
+                />
+              )}
               <RecenterMap center={center} zoom={selected ? 15 : 12} />
             </MapContainer>
           )}
