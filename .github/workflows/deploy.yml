@@ -27,6 +27,7 @@ jobs:
       - run: npm run build
         env:
           VITE_CONTENT_URL: https://script.google.com/macros/s/AKfycbwAMioSYvyC1TCaaehRdKNEXujOA_8FWf0p2ZY1AkuYPy3WSjPKmG5lmrlVqPzSVv51/exec
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

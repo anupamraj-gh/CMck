@@ -28,11 +28,21 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
   return googleMapsLoadPromise
 }
 
-interface PlaceSearchResult {
+interface PhotonPlaceSearchResult {
   id: string
   label: string
   coordinates: Coordinates
+  provider: 'photon'
 }
+
+interface GooglePlaceSearchResult {
+  id: string
+  label: string
+  prediction: google.maps.places.PlacePrediction
+  provider: 'google'
+}
+
+type PlaceSearchResult = PhotonPlaceSearchResult | GooglePlaceSearchResult
 
 interface PhotonResponse {
   features: {
@@ -49,6 +59,37 @@ interface PhotonResponse {
       country?: string
     }
   }[]
+}
+
+async function searchWithPhoton(query: string, signal: AbortSignal): Promise<PhotonPlaceSearchResult[]> {
+  const params = new URLSearchParams({
+    q: query,
+    limit: '10',
+    lat: String(OUTLET_LOCATION[0]),
+    lon: String(OUTLET_LOCATION[1]),
+    zoom: '10',
+  })
+  const response = await fetch(`https://photon.komoot.io/api/?${params}`, {
+    headers: { Accept: 'application/json' },
+    signal,
+  })
+  if (!response.ok) throw new Error('Location search is temporarily unavailable.')
+
+  const payload = await response.json() as PhotonResponse
+  return payload.features.map((feature, index) => {
+    const place = feature.properties
+    const label = [place.name, place.street, place.suburb, place.city ?? place.district ?? place.county, place.state, place.country]
+      .filter((part, partIndex, parts): part is string => !!part && parts.indexOf(part) === partIndex)
+      .join(', ')
+    const [longitude, latitude] = feature.geometry.coordinates
+    return {
+      id: String(place.osm_id ?? `${latitude},${longitude},${index}`),
+      label,
+      coordinates: [latitude, longitude] as Coordinates,
+      provider: 'photon' as const,
+    }
+  }).filter((result) => result.label
+    && distanceInMeters(OUTLET_LOCATION, result.coordinates) <= DELIVERY_RADIUS_METERS)
 }
 
 const selectedMarker = L.divIcon({
@@ -229,7 +270,9 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
   const [selectedLabel, setSelectedLabel] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [isCheckingRoute, setIsCheckingRoute] = useState(false)
+  const [isLocating, setIsLocating] = useState(false)
   const searchController = useRef<AbortController | null>(null)
+  const autocompleteSessionToken = useRef<google.maps.places.AutocompleteSessionToken | null>(null)
   const routeCheckId = useRef(0)
 
   useEffect(() => () => {
@@ -243,6 +286,7 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
     setLocationError('')
 
     if (query.length < 3) {
+      if (query.length === 0) autocompleteSessionToken.current = null
       setIsSearching(false)
       return
     }
@@ -253,39 +297,68 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
     const timer = window.setTimeout(async () => {
       setIsSearching(true)
       try {
-        const params = new URLSearchParams({
-          q: query,
-          limit: '10',
-          lat: String(OUTLET_LOCATION[0]),
-          lon: String(OUTLET_LOCATION[1]),
-          zoom: '10',
-        })
-        const response = await fetch(`https://photon.komoot.io/api/?${params}`, {
-          headers: { Accept: 'application/json' },
-          signal: controller.signal,
-        })
-        if (!response.ok) throw new Error('Location search is temporarily unavailable.')
-        const payload = await response.json() as PhotonResponse
-        const results = payload.features.map((feature, index) => {
-          const place = feature.properties
-          const label = [place.name, place.street, place.suburb, place.city ?? place.district ?? place.county, place.state, place.country]
-            .filter((part, partIndex, parts): part is string => !!part && parts.indexOf(part) === partIndex)
-            .join(', ')
-          const [longitude, latitude] = feature.geometry.coordinates
-          return {
-            id: String(place.osm_id ?? `${latitude},${longitude},${index}`),
-            label,
-            coordinates: [latitude, longitude] as Coordinates,
-          }
-        }).filter((result) => result.label
-          && distanceInMeters(OUTLET_LOCATION, result.coordinates) <= DELIVERY_RADIUS_METERS)
+        let results: PlaceSearchResult[]
+        if (mapProvider === 'google') {
+          const placesLibrary = await importLibrary('places')
+          if (controller.signal.aborted) return
+
+          const sessionToken = autocompleteSessionToken.current
+            ?? (autocompleteSessionToken.current = new placesLibrary.AutocompleteSessionToken())
+          const { suggestions } = await placesLibrary.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+            input: query,
+            locationBias: {
+              center: { lat: OUTLET_LOCATION[0], lng: OUTLET_LOCATION[1] },
+              radius: DELIVERY_RADIUS_METERS,
+            },
+            origin: { lat: OUTLET_LOCATION[0], lng: OUTLET_LOCATION[1] },
+            includedRegionCodes: ['in'],
+            language: 'en',
+            region: 'in',
+            sessionToken,
+          })
+          results = suggestions.flatMap(({ placePrediction }) => {
+            if (!placePrediction) return []
+            if (placePrediction.distanceMeters !== null
+              && placePrediction.distanceMeters > DELIVERY_RADIUS_METERS) return []
+            return [{
+              id: placePrediction.placeId,
+              label: placePrediction.text.toString(),
+              prediction: placePrediction,
+              provider: 'google',
+            }]
+          })
+        } else {
+          results = await searchWithPhoton(query, controller.signal)
+        }
+
         if (!controller.signal.aborted) {
           setSearchResults(results)
-          if (results.length === 0) setLocationError('No matching places found within 15 km of Udupi Garden. Try a nearby area or landmark.')
+          if (results.length === 0) {
+            setLocationError(mapProvider === 'google'
+              ? 'No Google Maps places found within 15 km of Udupi Garden. Try a nearby street or landmark.'
+              : 'No matching places found within 15 km of Udupi Garden. Try a nearby area or landmark.')
+          }
         }
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return
-        setLocationError(error instanceof Error ? error.message : 'Could not search for that location.')
+        if (controller.signal.aborted) return
+        if (mapProvider === 'google') {
+          try {
+            const fallbackResults = await searchWithPhoton(query, controller.signal)
+            if (controller.signal.aborted) return
+            setSearchResults(fallbackResults)
+            setLocationError(fallbackResults.length > 0
+              ? 'Google Places is unavailable; showing OpenStreetMap results. Enable Places API (New) for Google search.'
+              : 'Google Places is unavailable and no nearby OpenStreetMap places matched. Enable Places API (New) or try a nearby street.')
+          } catch (fallbackError) {
+            if (fallbackError instanceof DOMException && fallbackError.name === 'AbortError') return
+            setLocationError(fallbackError instanceof Error
+              ? `Google Places failed and ${fallbackError.message.toLowerCase()}`
+              : 'Google Places and OpenStreetMap search are unavailable. Please try again later.')
+          }
+        } else {
+          setLocationError(error instanceof Error ? error.message : 'Could not search for that location.')
+        }
       } finally {
         if (!controller.signal.aborted) setIsSearching(false)
       }
@@ -295,7 +368,7 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
       window.clearTimeout(timer)
       controller.abort()
     }
-  }, [searchQuery])
+  }, [mapProvider, searchQuery])
 
   const checkAndSelectLocation = async (coordinates: Coordinates, label: string) => {
     if (distanceInMeters(OUTLET_LOCATION, coordinates) > DELIVERY_RADIUS_METERS) {
@@ -327,8 +400,71 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
     setLocationError('')
   }
 
-  const selectSearchResult = (result: PlaceSearchResult) => {
-    void checkAndSelectLocation(result.coordinates, result.label)
+  const useCurrentLocation = () => {
+    setLocationError('')
+    if (!window.isSecureContext) {
+      setLocationError('Current location requires HTTPS or localhost.')
+      return
+    }
+    if (!navigator.geolocation) {
+      setLocationError('Your browser does not support location access.')
+      return
+    }
+
+    setIsLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const coordinates: Coordinates = [coords.latitude, coords.longitude]
+        setIsLocating(false)
+        setSearchResults([])
+        setSelected(null)
+        setSelectedDistance(null)
+        setSelectedLabel('')
+        setCenter(coordinates)
+        void checkAndSelectLocation(coordinates, 'Current location')
+      },
+      (error) => {
+        setIsLocating(false)
+        if (error.code === 1) {
+          setLocationError('Location permission was denied. Allow location access in your browser settings, then try again.')
+        } else if (error.code === 2) {
+          setLocationError('Your location is unavailable. Check your device location services and try again.')
+        } else if (error.code === 3) {
+          setLocationError('Getting your location timed out. Please try again.')
+        } else {
+          setLocationError('Could not get your current location. Please try again.')
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
+    )
+  }
+
+  const selectSearchResult = async (result: PlaceSearchResult) => {
+    setSearchResults([])
+    if (result.provider === 'photon') {
+      void checkAndSelectLocation(result.coordinates, result.label)
+      return
+    }
+
+    setIsSearching(true)
+    try {
+      const place = result.prediction.toPlace()
+      await place.fetchFields({ fields: ['location', 'formattedAddress', 'displayName'] })
+      if (!place.location) {
+        setLocationError('Google Maps did not return a location for this place. Try another result.')
+        return
+      }
+
+      const coordinates: Coordinates = [place.location.lat(), place.location.lng()]
+      const label = place.formattedAddress ?? place.displayName ?? result.label
+      setCenter(coordinates)
+      void checkAndSelectLocation(coordinates, label)
+    } catch {
+      setLocationError('Could not load this Google Maps place. Try another result.')
+    } finally {
+      autocompleteSessionToken.current = null
+      setIsSearching(false)
+    }
   }
 
   const selectMapLocation = (coordinates: Coordinates) => {
@@ -430,18 +566,31 @@ export function GoogleLocationPicker({ value, drivingDistanceMeters, onSelect, o
               <RecenterMap center={center} zoom={selected ? 15 : 12} />
             </MapContainer>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              setCenter(OUTLET_LOCATION)
-              setLocationError('')
-            }}
-            className="absolute right-3 top-3 z-[500] inline-flex h-11 w-11 items-center justify-center rounded-md bg-paper text-ink shadow-md hover:bg-cream"
-            aria-label="Center map on Udupi Garden outlet"
-            title="Center map on Udupi Garden outlet"
-          >
-            <LocateFixed className="h-5 w-5" />
-          </button>
+          <div className="absolute right-3 top-3 z-[500] flex gap-2">
+            <button
+              type="button"
+              onClick={useCurrentLocation}
+              disabled={isLocating || isCheckingRoute}
+              className="inline-flex h-11 items-center gap-2 rounded-md bg-paper px-3 text-xs font-semibold text-ink shadow-md hover:bg-cream disabled:cursor-not-allowed disabled:opacity-70"
+              aria-label="Use my current location"
+              title="Use my current location"
+            >
+              {isLocating || isCheckingRoute ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+              {isLocating ? 'Locating...' : isCheckingRoute ? 'Checking...' : 'Use my location'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCenter(OUTLET_LOCATION)
+                setLocationError('')
+              }}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-paper text-ink shadow-md hover:bg-cream"
+              aria-label="Center map on Udupi Garden outlet"
+              title="Center map on Udupi Garden outlet"
+            >
+              <LocateFixed className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <footer className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">

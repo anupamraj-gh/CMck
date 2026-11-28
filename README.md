@@ -60,6 +60,21 @@ and re-render when valid content changes.
    The endpoint is publicly readable, so only put public website content in
    this sheet; keep the spreadsheet itself private.
 
+   ### Google Maps API key
+
+   The location picker reads `VITE_GOOGLE_MAPS_API_KEY` and falls back to Leaflet
+   when the key is not configured. For local development, put the key in the
+   ignored `.env.local` file. For GitHub Pages, add a repository Actions secret
+   named `VITE_GOOGLE_MAPS_API_KEY`; the deploy workflow passes it to the build.
+
+   The key is included in browser JavaScript, so enable Maps JavaScript API and
+   Places API (New) in the same Google Cloud project, then restrict the key to
+   those APIs and your website referrers, including
+   `http://localhost:5173/*` for local development. Places API (New) powers
+   place-name suggestions when Google Maps is active; Photon/OpenStreetMap
+   remains the search provider when the map falls back to Leaflet. Do not commit
+   the key.
+
 ### Connect the app
 
 Set `VITE_CONTENT_URL` to the copied web app URL in local `.env.local`. The
