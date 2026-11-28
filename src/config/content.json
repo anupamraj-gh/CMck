@@ -221,8 +221,8 @@
       "shortDescription": "Crafted with pure honey for deeper flavor.",
       "description": "Our signature tiramisu are freshly prepared only after you place your order, so you receive them fresh from our kitchen.",
       "basePrice": 345,
-      "image": "../../src/assets/homemade-tiramisu-pure-joy.png",
-      "heroImage": "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=1200&q=80",
+      "image": "src/assets/homemade-tiramisu-pure-joy.png",
+      "heroImage": "src/assets/homemade-tiramisu-pure-joy.png",
       "videoUrl": "https://videos.pexels.com/video-files/20685100/20685100-uhd_2560_1440_25fps.mp4",
       "videoPoster": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=1200&q=80",
       "highlights": ["Fresh Ingredients", "Handmade", "No Preservatives", "Customizable"],
@@ -290,9 +290,9 @@
           "label": "Size",
           "type": "radio",
           "options": [
-            { "id": "small", "label": "6 inch (6-8 servings)", "priceModifier": 0 },
-            { "id": "medium", "label": "8 inch (10-12 servings)", "priceModifier": 300 },
-            { "id": "large", "label": "10 inch (14-16 servings)", "priceModifier": 600 }
+            { "id": "small", "label": "6 inch (1 servings)", "priceModifier": 0 },
+            { "id": "medium", "label": "8 inch (2-3 servings)", "priceModifier": 300 },
+            { "id": "large", "label": "10 inch (4-5 servings)", "priceModifier": 600 }
           ]
         },
         {
@@ -308,27 +308,32 @@
       ]
     },
     {
-      "id": "protein-bar",
-      "name": "Protein Power Bar",
-      "shortDescription": "High-protein energy bars with natural ingredients",
-      "description": "Fuel your day with our handcrafted protein bars packed with 22g of plant-based protein, organic oats, and superfood seeds. No artificial sweeteners, just pure nutrition.",
+      "id": "korean-cream-cheese-buns",
+      "name": "Korean Cream Cheese Buns",
+      "shortDescription": "Delicious Korean-style cream cheese buns with a hint of sweetness.",
+      "description": "",
       "basePrice": 149,
       "image": "",
       "heroImage": "",
       "videoUrl": "https://videos.pexels.com/video-files/6754072/6754072-uhd_2560_1440_25fps.mp4",
       "videoPoster": "",
-      "highlights": ["High Protein", "No Preservatives", "Handmade", "Fresh Ingredients"],
+      "highlights": ["Korean-Style", "No Preservatives", "Handmade", "Fresh Ingredients"],
       "prepTime": "20 mins",
       "rating": 4.8,
       "reviewCount": 256,
       "ingredients": [
-        "Organic rolled oats",
-        "Pea protein isolate",
-        "Almond butter",
-        "Organic honey",
-        "Dark chocolate chips",
-        "Chia seeds",
-        "Dried cranberries"
+        "Cream",
+        "Butter",
+        "Honey"
+        "Milk"
+        "Rock salt"
+        "Yeast"
+        "Cheese Spread"
+        "Garlic"
+        "Coriander"
+        "Origano"
+        "Chilli Flakes"
+        "All purpose flour"
       ],
       "preparationSteps": [
         { "step": 1, "title": "Mix Dry Ingredients", "description": "Combine oats, protein powder, and seeds in a large mixing bowl." },
@@ -338,10 +343,9 @@
       ],
       "cookingInstructions": [
         "Store in a cool, dry place or refrigerate for extended freshness.",
-        "Best consumed within 7 days of delivery.",
-        "Perfect pre or post-workout snack."
+        "Best consumed within 7 days of delivery."
       ],
-      "servingSuggestions": "Enjoy with a glass of almond milk or as a mid-day energy boost.",
+      "servingSuggestions":  "Preffered to eat warm. Pair with our cream dip if you like sweeet.",
       "customizations": [
         {
           "id": "protein-type",
