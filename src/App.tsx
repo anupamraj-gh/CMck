@@ -4,6 +4,7 @@ import { Layout } from '@/components/layout/Layout'
 import { HomePage } from '@/pages/HomePage'
 import { ProductPage } from '@/pages/ProductPage'
 import { CheckoutPage } from '@/pages/CheckoutPage'
+import { LaunchOfferPage } from '@/pages/LaunchOfferPage'
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
+            <Route path="launch-offer" element={<LaunchOfferPage />} />
             <Route path="product/:id" element={<ProductPage />} />
             <Route path="checkout" element={<CheckoutPage />} />
           </Route>

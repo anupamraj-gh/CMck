@@ -48,6 +48,15 @@
     "kicker": "our signature collection",
     "title": "The Curated Menu",
     "description": "Five handcrafted masterpieces, pinned up just for you. Watch the recipe, customize your order, and taste the difference.",
+    "launchOfferHeadline": "A Sweet Little Combo to Celebrate Our Launch",
+    "launchOfferDescription": "Discover a little launch-day magic with our thoughtfully curated treat combos.",
+    "launchOfferImages": [
+      "/homemade-tiramisu-pure-joy.png",
+      "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=480&h=360&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=480&h=360&fit=crop&q=80",
+      "https://images.pexels.com/photos/8599576/pexels-photo-8599576.jpeg?w=480&h=360&fit=crop"
+    ],
+    "launchOfferImageAlt": "A launch combo featuring Signature Tiramisu, cookies, brookies, and cream cheese buns.",
     "chefsRecommendationId": "cookie-collection",
     "chefsRecommendationNote": "made fresh daily!",
     "addLabel": "Add",
@@ -213,6 +222,58 @@
     ],
     "socialNote": "Made with love in our kitchen.",
     "bottomNote": "Cooked with love, delivered with care."
+  },
+  "launchOffer": {
+    "backToMenuLabel": "Back to the menu",
+    "introKicker": "A sweet start to our story",
+    "title": "Choose your launch bundle",
+    "description": "Pick the treat bundle that feels right for your first Craving Manager order.",
+    "samplePriceNotice": "Sample prices for preview only. Final launch prices will be updated before orders go live.",
+    "selectionAriaLabel": "Choose a launch bundle",
+    "selectBundleLabel": "Select",
+    "samplePriceLabel": "Sample price",
+    "bundleContentsLabel": "Bundle contents",
+    "addToTrayLabel": "Add bundle to Kitchen Tray",
+    "trayReviewNote": "You can review your selection and delivery total in the Kitchen Tray.",
+    "bundles": [
+      {
+        "id": "bundle-1",
+        "name": "The Ember & Cream Box",
+        "price": 499,
+        "image": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=320&h=320&fit=crop&q=80",
+        "imageAlt": "Freshly baked chocolate cookies",
+        "contents": [
+          "2 x Rugtoora Ember cookies",
+          "1 x Korean Cream Cheese Bun",
+          "1 x Secret Blend Cream Dip"
+        ]
+      },
+      {
+        "id": "bundle-2",
+        "name": "The Cozy Crave Duo",
+        "price": 399,
+        "image": "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=320&h=320&fit=crop&q=80",
+        "imageAlt": "Rich chocolate brownie",
+        "contents": [
+          "1 x Korean Cream Cheese Bun",
+          "2 x Brookie"
+        ]
+      },
+      {
+        "id": "bundle-3",
+        "name": "The Grand Craving Box",
+        "price": 999,
+        "image": "/homemade-tiramisu-pure-joy.png",
+        "imageAlt": "Signature Tiramisu",
+        "contents": [
+          "1 x Signature Tiramisu",
+          "1 x Brookie",
+          "1 x Korean Cream Cheese Bun",
+          "4 x Rugtoora Ember cookies",
+          "2 x Secret Blend Cream Dips"
+        ]
+      }
+    ]
   },
   "products": [
     {

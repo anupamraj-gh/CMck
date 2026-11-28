@@ -42,6 +42,7 @@ function isContentConfig(value: unknown): value is ContentConfig {
     'testimonials',
     'faq',
     'footer',
+    'launchOffer',
     'products',
   ]
 
@@ -51,8 +52,47 @@ function isContentConfig(value: unknown): value is ContentConfig {
     Array.isArray(value.deliveryTimeSlots) &&
     value.deliveryTimeSlots.every((slot) => typeof slot === 'string') &&
     isRecord(value.sections) &&
+    isRecord(value.productGrid) &&
+    typeof value.productGrid.launchOfferHeadline === 'string' &&
+    typeof value.productGrid.launchOfferDescription === 'string' &&
+    Array.isArray(value.productGrid.launchOfferImages) &&
+    value.productGrid.launchOfferImages.every((image) => typeof image === 'string') &&
+    typeof value.productGrid.launchOfferImageAlt === 'string' &&
+    isLaunchOffer(value.launchOffer) &&
     Array.isArray(value.products) &&
     value.products.every(isProduct)
+  )
+}
+
+function isLaunchOffer(value: unknown): boolean {
+  if (!isRecord(value) || !Array.isArray(value.bundles)) return false
+
+  const textFields = [
+    'backToMenuLabel',
+    'introKicker',
+    'title',
+    'description',
+    'samplePriceNotice',
+    'selectionAriaLabel',
+    'selectBundleLabel',
+    'samplePriceLabel',
+    'bundleContentsLabel',
+    'addToTrayLabel',
+    'trayReviewNote',
+  ]
+
+  return (
+    textFields.every((field) => typeof value[field] === 'string') &&
+    value.bundles.every((bundle) =>
+      isRecord(bundle) &&
+      typeof bundle.id === 'string' &&
+      typeof bundle.name === 'string' &&
+      typeof bundle.price === 'number' &&
+      typeof bundle.image === 'string' &&
+      typeof bundle.imageAlt === 'string' &&
+      Array.isArray(bundle.contents) &&
+      bundle.contents.every((item) => typeof item === 'string')
+    )
   )
 }
 

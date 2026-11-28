@@ -5,6 +5,7 @@ import { PhotoPlaceholder } from '@/components/craft/PhotoPlaceholder'
 import { EditorialValue } from '@/components/craft/EditorialValue'
 import { useCartStore } from '@/store/cartStore'
 import { useTraySheetStore } from '@/store/traySheetStore'
+import { getProductById } from '@/data/products'
 import { formatCurrency } from '@/lib/utils'
 import { triggerHaptic } from '@/lib/haptics'
 import { DURATION, EASE } from '@/lib/motion'
@@ -14,6 +15,7 @@ export const TrayItemRow = memo(function TrayItemRow({ item }: { item: CartItem 
   const updateQuantity = useCartStore((s) => s.updateQuantity)
   const removeItem = useCartStore((s) => s.removeItem)
   const editItem = useTraySheetStore((s) => s.editItem)
+  const canEdit = Boolean(getProductById(item.productId))
 
   return (
     <motion.div
@@ -92,12 +94,14 @@ export const TrayItemRow = memo(function TrayItemRow({ item }: { item: CartItem 
                 +
               </button>
             </div>
-            <button
-              onClick={() => editItem(item.id)}
-              className="text-xs font-bold text-ink-soft hover:text-coral-deep transition-colors duration-fast ease-hover underline underline-offset-2 decoration-ink-faint/40"
-            >
-              Edit
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => editItem(item.id)}
+                className="text-xs font-bold text-ink-soft hover:text-coral-deep transition-colors duration-fast ease-hover underline underline-offset-2 decoration-ink-faint/40"
+              >
+                Edit
+              </button>
+            )}
           </div>
           <span className="text-sm font-mono font-bold text-coral-deep shrink-0">
             <EditorialValue value={formatCurrency(item.totalPrice)} />

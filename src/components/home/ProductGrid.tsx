@@ -258,14 +258,11 @@ function QuickAddControl({
   )
 }
 
-function FeaturedCard({ product, index, rotate }: CardProps) {
-  const cartQuantity = useProductCartQuantity(product.id)
-  const compressKey = useBumpOnIncrease(cartQuantity)
-
+function FeaturedOfferCard() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 44, rotate: rotate - 6 }}
-      whileInView={{ opacity: 1, y: 0, rotate }}
+      initial={{ opacity: 0, y: 36, rotate: -1.5 }}
+      whileInView={{ opacity: 1, y: 0, rotate: -1.5 }}
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: DURATION.slow, ease: EASE.entrance }}
       whileHover={{ rotate: 0, y: -8, scale: 1.01, transition: { duration: DURATION.fast, ease: EASE.hover } }}
@@ -273,53 +270,42 @@ function FeaturedCard({ product, index, rotate }: CardProps) {
     >
       <PaperStack>
       <motion.div
-        key={compressKey}
-        animate={{ scale: [1, 0.98, 1] }}
-        transition={{ duration: DURATION.fast, ease: EASE.entrance }}
         className="relative bg-paper bg-grain p-5 sm:p-6 sm:pl-14 craft-shadow-lg rounded-sm border border-ink/10 lg:grid lg:grid-cols-[1fr_1.1fr] lg:gap-8 lg:items-center">
         <NotebookHoles count={7} className="absolute left-4 sm:left-5 top-8 bottom-8 hidden sm:flex" />
         <WashiTape className="left-1/2 -top-3.5 -translate-x-1/2 z-10" color="var(--color-mint)" rotate={-4} width={90} />
         <span className="absolute -top-3 right-6 z-10 inline-block px-3.5 py-1.5 rounded-full bg-ink text-cream text-xs font-bold tracking-wide craft-shadow-sm rotate-3">
-          Chef&apos;s Special
+          Launch Offer
         </span>
 
-        <Link to={`/product/${product.id}#customize`} className="block relative rounded-md border-2 border-dashed border-ink-faint/60 p-2 bg-lavender/40">
-          <div className="relative overflow-hidden rounded bg-lavender-deep aspect-[4/3]">
-            {product.image ? (
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
-            ) : (
-              <PhotoPlaceholder />
-            )}
+        <Link to="/launch-offer" className="block relative rounded-md border-2 border-dashed border-ink-faint/60 p-2 bg-lavender/40">
+          <div
+            role="img"
+            aria-label={productGridContent.launchOfferImageAlt}
+            className="relative grid aspect-[4/3] grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded bg-lavender-deep transition-transform duration-700 group-hover:scale-105"
+          >
+            {productGridContent.launchOfferImages.map((image) => (
+              <img key={image} src={image} alt="" loading="lazy" className="h-full w-full object-cover" />
+            ))}
           </div>
         </Link>
 
-        <div className="pt-5 lg:pt-0 flex flex-col">
-          <Link to={`/product/${product.id}#customize`} className="block">
-            <h3 className="font-serif font-semibold text-ink leading-snug group-hover:text-coral-deep transition-colors duration-fast ease-hover mb-1.5 text-2xl sm:text-3xl">
-              {product.name}
-            </h3>
+        <div className="pt-5 lg:pt-0 flex flex-col items-start">
+          <p className="mb-2 font-hand text-2xl text-coral-deep">A sweet start to our story</p>
+          <h3 className="font-serif font-semibold text-ink leading-snug mb-2 text-2xl sm:text-3xl">
+            {productGridContent.launchOfferHeadline}
+          </h3>
+          <p className="text-ink-soft mb-5 text-base leading-relaxed">{productGridContent.launchOfferDescription}</p>
+          <Link
+            to="/launch-offer"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-coral px-5 text-sm font-bold text-paper craft-shadow-sm transition-colors duration-fast ease-hover hover:bg-coral-deep"
+          >
+            Order Now
+            <ArrowRight className="h-4 w-4" />
           </Link>
-          <RatingRow rating={product.rating} reviewCount={product.reviewCount} size="lg" />
-          <p className="text-ink-soft mb-4 text-base leading-relaxed">{product.description}</p>
-          <div className="flex items-center justify-between mt-auto gap-3 pr-14 sm:pr-0">
-            <QuickAddControl product={product} fullLabel />
-            <Link
-              to={`/product/${product.id}#customize`}
-              className="text-sm font-bold text-ink-soft hover:text-coral-deep transition-colors duration-fast ease-hover inline-flex items-center gap-1 shrink-0"
-            >
-              {productGridContent.customizeLabel}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
         </div>
       </motion.div>
       </PaperStack>
 
-      <PriceBadge product={product} rotate={rotate} index={index} />
     </motion.div>
   )
 }
@@ -400,7 +386,7 @@ function RecipeCard({ product, index, rotate, bestseller = false, compact = fals
 }
 
 export function ProductGrid() {
-  const [featured, ...rest] = products
+  const offerProduct = getProductById('tiramisu')
   const chefsRecommendation = getProductById(productGridContent.chefsRecommendationId)
 
   return (
@@ -430,13 +416,15 @@ export function ProductGrid() {
           </p>
         </motion.div>
 
-        <div className="mb-10 lg:mb-16">
-          <FeaturedCard product={featured} index={0} rotate={-1.5} />
-        </div>
+        {offerProduct && (
+          <div className="mb-10 lg:mb-16">
+            <FeaturedOfferCard />
+          </div>
+        )}
 
         <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-14 max-sm:gap-y-6 pb-0 sm:pb-16">
-          {rest.map((product, i) => {
-            const globalIndex = i + 1
+          {products.map((product, i) => {
+            const globalIndex = i + (offerProduct ? 1 : 0)
             const rotate = globalIndex % 2 === 0 ? -2.5 : 3
             const cfg = [
               { span: 'lg:col-span-3', mt: 'lg:mt-10', mobile: 'max-sm:w-[88%] max-sm:mr-auto' },
