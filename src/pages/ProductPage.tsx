@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
-import { getProductById } from '@/data/products'
+import { useContent } from '@/config/content'
 // import { RecipeVideo } from '@/components/product/RecipeVideo'
 import { ProductHero } from '@/components/product/ProductHero'
 import { RecipeSection } from '@/components/product/RecipeSection'
@@ -22,9 +22,10 @@ import { EDITORIAL_STRINGS } from '@/config/editorialStrings'
 
 export function ProductPage() {
   const { id } = useParams<{ id: string }>()
+  const content = useContent()
   const navigate = useNavigate()
   const addItem = useCartStore((s) => s.addItem)
-  const product = getProductById(id ?? '')
+  const product = content.products.find((item) => item.id === id)
 
   const [selections, setSelections] = useState<Record<string, string | string[]>>({})
   const [quantity, setQuantity] = useState(1)
@@ -32,11 +33,17 @@ export function ProductPage() {
 
   const heroRef = useRef<HTMLElement>(null)
   const purchaseCardRef = useRef<HTMLElement>(null)
+  const initializedProductId = useRef<string | undefined>(undefined)
 
   useEffect(() => {
-    if (product) {
-      setSelections(buildDefaultSelections(product.customizations))
+    if (!product) {
+      initializedProductId.current = undefined
+      return
     }
+    if (initializedProductId.current === product.id) return
+
+    initializedProductId.current = product.id
+    setSelections(buildDefaultSelections(product.customizations))
   }, [product])
 
   const { customizations, unitPrice } = usePricing(

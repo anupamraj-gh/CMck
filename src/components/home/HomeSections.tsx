@@ -20,7 +20,7 @@ import {
   HandmadeStamp,
 } from '@/components/decor/Doodles'
 import { PageTab } from '@/components/decor/PageTab'
-import { SITE_CONFIG, CONTENT, fillTemplate } from '@/config/content'
+import { fillTemplate, useContent } from '@/config/content'
 import { DURATION, EASE } from '@/lib/motion'
 
 const featureIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
@@ -36,13 +36,10 @@ const doodleIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   stamp: HandmadeStamp,
 }
 
-const about = CONTENT.about
-const whyChooseUs = CONTENT.whyChooseUs
-const testimonialsContent = CONTENT.testimonials
-const faqContent = CONTENT.faq
-const [faqHeadingLine1, faqHeadingLine2] = faqContent.heading.split('\n')
-
 export function AboutSection() {
+  const content = useContent()
+  const about = content.about
+
   return (
     <section id="about" className="relative py-10 sm:py-28 scroll-mt-24 overflow-visible">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,7 +59,7 @@ export function AboutSection() {
             </h2>
             {about.paragraphs.map((paragraph, i) => (
               <p key={i} className={`text-ink-soft leading-loose ${i === 0 ? 'mb-4' : ''}`}>
-                {fillTemplate(paragraph, { brandName: SITE_CONFIG.brandName })}
+                {fillTemplate(paragraph, { brandName: content.site.brandName })}
               </p>
             ))}
             <CoffeeStain className="absolute -bottom-6 -left-4 h-12 w-12 text-coral-deep/25 block sm:-bottom-8 sm:-left-6 sm:h-20 sm:w-20" />
@@ -112,6 +109,8 @@ export function AboutSection() {
 }
 
 export function WhyChooseUs() {
+  const content = useContent()
+  const whyChooseUs = content.whyChooseUs
   const stats = whyChooseUs.stats
 
   return (
@@ -126,7 +125,7 @@ export function WhyChooseUs() {
           <PageTab label={whyChooseUs.pageLabel} rotate={-2} className="mb-5" />
           <p className="font-hand text-2xl text-ink/70 mb-1">{whyChooseUs.kicker}</p>
           <h2 className="font-serif text-4xl font-bold text-ink mb-10 sm:mb-20">
-            {fillTemplate(whyChooseUs.titleTemplate, { brandName: SITE_CONFIG.brandName })}
+            {fillTemplate(whyChooseUs.titleTemplate, { brandName: content.site.brandName })}
           </h2>
         </motion.div>
 
@@ -195,6 +194,7 @@ export function WhyChooseUs() {
 }
 
 export function Testimonials() {
+  const testimonialsContent = useContent().testimonials
   const testimonials = testimonialsContent.items
 
   return (
@@ -268,7 +268,9 @@ export function Testimonials() {
 }
 
 export function FAQSection() {
+  const faqContent = useContent().faq
   const faqs = faqContent.items
+  const [faqHeadingLine1, faqHeadingLine2] = faqContent.heading.split('\n')
 
   return (
     <section id="faq" className="relative py-10 sm:py-28 scroll-mt-24">

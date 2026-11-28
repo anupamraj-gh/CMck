@@ -1,17 +1,27 @@
 import raw from './content.json'
+import { useSyncExternalStore } from 'react'
 import type { Product } from '@/types'
 
-declare global {
-  interface Window {
-    __cravingManagerContentCallback?: (data: unknown) => void
-  }
-}
-
-type ContentConfig = typeof raw & { products: Product[] }
+type ContentConfig = Omit<typeof raw, 'products'> & { products: Product[] }
 
 export let CONTENT: ContentConfig = raw as ContentConfig
 export let SITE_CONFIG = CONTENT.site
 export let DELIVERY_TIME_SLOTS = CONTENT.deliveryTimeSlots
+
+const contentListeners = new Set<() => void>()
+let currentContentJson = JSON.stringify(CONTENT)
+let remoteContentRequest: Promise<void> | null = null
+
+export function subscribeToContent(listener: () => void) {
+  contentListeners.add(listener)
+  return () => {
+    contentListeners.delete(listener)
+  }
+}
+
+export function useContent(): ContentConfig {
+  return useSyncExternalStore(subscribeToContent, () => CONTENT, () => CONTENT)
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -97,36 +107,59 @@ function isLaunchOffer(value: unknown): boolean {
 }
 
 function setContent(content: ContentConfig) {
+  const contentJson = JSON.stringify(content)
+  if (contentJson === currentContentJson) return
+
   CONTENT = content
   SITE_CONFIG = content.site
   DELIVERY_TIME_SLOTS = content.deliveryTimeSlots
+  currentContentJson = contentJson
+  contentListeners.forEach((listener) => listener())
 }
 
 function loadJsonp(url: string): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    const callbackName = '__cravingManagerContentCallback'
+    const callbackName = `__cravingManagerContent_${Date.now()}_${Math.random().toString(36).slice(2)}`
     const script = document.createElement('script')
     const endpoint = new URL(url)
+    let settled = false
     const timeout = window.setTimeout(() => {
-      cleanup()
+      settled = true
       reject(new Error('Timed out loading Google Sheets content'))
-    }, 8000)
+    }, 30_000)
 
     function cleanup() {
       window.clearTimeout(timeout)
-      window.__cravingManagerContentCallback = undefined
       script.remove()
+      Reflect.deleteProperty(window, callbackName)
     }
 
-    window.__cravingManagerContentCallback = (data) => {
-      cleanup()
-      resolve(data)
-    }
+    Object.assign(window, {
+      [callbackName]: (data: unknown) => {
+        if (settled) return
+        settled = true
+        cleanup()
+        resolve(data)
+      },
+    })
     endpoint.searchParams.set('callback', callbackName)
     endpoint.searchParams.set('_', String(Date.now()))
     script.src = endpoint.toString()
     script.async = true
+    script.onload = () => {
+      if (settled) cleanup()
+      else {
+        settled = true
+        cleanup()
+        reject(new Error('Google Sheets did not invoke its JSONP callback'))
+      }
+    }
     script.onerror = () => {
+      if (settled) {
+        cleanup()
+        return
+      }
+      settled = true
       cleanup()
       reject(new Error('Unable to load Google Sheets content'))
     }
@@ -134,19 +167,26 @@ function loadJsonp(url: string): Promise<unknown> {
   })
 }
 
-export async function loadRemoteContent() {
+export function loadRemoteContent(): Promise<void> {
   const endpoint = import.meta.env.VITE_CONTENT_URL
-  if (!endpoint) return
+  if (!endpoint) return Promise.resolve()
+  if (remoteContentRequest) return remoteContentRequest
 
-  try {
-    const content = await loadJsonp(endpoint)
-    if (!isContentConfig(content)) {
-      throw new Error('Google Sheets returned invalid content')
-    }
-    setContent(content)
-  } catch (error) {
-    console.warn('Using bundled content.json because remote content could not be loaded.', error)
-  }
+  remoteContentRequest = loadJsonp(endpoint)
+    .then((content) => {
+      if (!isContentConfig(content)) {
+        throw new Error('Google Sheets returned invalid content')
+      }
+      setContent(content)
+    })
+    .catch((error: unknown) => {
+      console.warn('Keeping the last valid content because remote content could not be loaded.', error)
+    })
+    .finally(() => {
+      remoteContentRequest = null
+    })
+
+  return remoteContentRequest
 }
 
 export function fillTemplate(text: string, vars: Record<string, string>): string {

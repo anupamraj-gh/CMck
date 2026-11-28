@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DELIVERY_TIME_SLOTS } from '@/config/content'
+import { useContent } from '@/config/content'
 import type { DeliveryInfo } from '@/types'
 
 export interface DeliveryDetailsStepProps {
@@ -35,6 +35,8 @@ export const DeliveryDetailsStep = memo(function DeliveryDetailsStep({
   onTimeChange,
   onBlur,
 }: DeliveryDetailsStepProps) {
+  const deliveryTimeSlots = useContent().deliveryTimeSlots
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -69,7 +71,7 @@ export const DeliveryDetailsStep = memo(function DeliveryDetailsStep({
               <SelectValue placeholder="Select time slot" />
             </SelectTrigger>
             <SelectContent>
-              {DELIVERY_TIME_SLOTS.map((slot) => (
+              {deliveryTimeSlots.map((slot) => (
                 <SelectItem key={slot} value={slot}>
                   {slot}
                 </SelectItem>

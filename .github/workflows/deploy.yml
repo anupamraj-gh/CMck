@@ -25,6 +25,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          VITE_CONTENT_URL: https://script.google.com/macros/s/AKfycbwAMioSYvyC1TCaaehRdKNEXujOA_8FWf0p2ZY1AkuYPy3WSjPKmG5lmrlVqPzSVv51/exec
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

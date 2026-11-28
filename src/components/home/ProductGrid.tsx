@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, Star, Plus, Check } from 'lucide-react'
 import { products, getProductById } from '@/data/products'
 import { formatCurrency } from '@/lib/utils'
-import { CONTENT } from '@/config/content'
+import { useContent } from '@/config/content'
 import {
   useCartStore,
   buildDefaultSelections,
@@ -21,7 +21,6 @@ import { useBumpOnIncrease } from '@/hooks/useBumpOnIncrease'
 import { useProductCartQuantity } from '@/hooks/useProductCartQuantity'
 import { EDITORIAL_STRINGS, itemAddedAnnouncement } from '@/config/editorialStrings'
 
-const productGridContent = CONTENT.productGrid
 import { WashiTape, ScribbleUnderline, NotebookHoles, HeartDoodle } from '@/components/decor/Doodles'
 import { PageTab } from '@/components/decor/PageTab'
 import { StickyNote } from '@/components/craft/StickyNote'
@@ -87,6 +86,7 @@ function QuickAddControl({
   compact?: boolean
   fullLabel?: boolean
 }) {
+  const productGridContent = useContent().productGrid
   const items = useCartStore((s) => s.items)
   const addItem = useCartStore((s) => s.addItem)
   const updateQuantity = useCartStore((s) => s.updateQuantity)
@@ -259,6 +259,8 @@ function QuickAddControl({
 }
 
 function FeaturedOfferCard() {
+  const productGridContent = useContent().productGrid
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 36, rotate: -1.5 }}
@@ -311,6 +313,7 @@ function FeaturedOfferCard() {
 }
 
 function RecipeCard({ product, index, rotate, bestseller = false, compact = false }: CardProps) {
+  const productGridContent = useContent().productGrid
   const cartQuantity = useProductCartQuantity(product.id)
   const compressKey = useBumpOnIncrease(cartQuantity)
 
@@ -386,6 +389,7 @@ function RecipeCard({ product, index, rotate, bestseller = false, compact = fals
 }
 
 export function ProductGrid() {
+  const productGridContent = useContent().productGrid
   const offerProduct = getProductById('tiramisu')
   const chefsRecommendation = getProductById(productGridContent.chefsRecommendationId)
 

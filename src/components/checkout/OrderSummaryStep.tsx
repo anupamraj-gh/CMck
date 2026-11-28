@@ -7,7 +7,7 @@ import { EditorialValue } from '@/components/craft/EditorialValue'
 import { PaperSettleValue } from '@/components/craft/PaperSettleValue'
 import { StarDoodle } from '@/components/decor/Doodles'
 import { formatCurrency } from '@/lib/utils'
-import { SITE_CONFIG } from '@/config/content'
+import { useContent } from '@/config/content'
 import { DURATION, EASE } from '@/lib/motion'
 import type { CartItem } from '@/types'
 
@@ -35,6 +35,8 @@ export const OrderSummaryStep = memo(function OrderSummaryStep({
   onRemoveItem,
   onQuantityChange,
 }: OrderSummaryStepProps) {
+  const site = useContent().site
+
   return (
     <>
       <StarDoodle className="absolute -top-3 -right-3 h-6 w-6 text-butter-deep animate-wiggle" />
@@ -132,9 +134,9 @@ export const OrderSummaryStep = memo(function OrderSummaryStep({
             <PaperSettleValue value={deliveryCharge === 0 ? 'FREE' : formatCurrency(deliveryCharge)} />
           </span>
         </div>
-        {subtotal < SITE_CONFIG.freeDeliveryAbove && (
+        {subtotal < site.freeDeliveryAbove && (
           <p className="text-xs text-ink-soft">
-            Free delivery on orders above {formatCurrency(SITE_CONFIG.freeDeliveryAbove)}
+            Free delivery on orders above {formatCurrency(site.freeDeliveryAbove)}
           </p>
         )}
         <Separator />

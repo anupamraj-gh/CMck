@@ -5,17 +5,18 @@ import { PhotoPlaceholder } from '@/components/craft/PhotoPlaceholder'
 import { EditorialValue } from '@/components/craft/EditorialValue'
 import { useCartStore } from '@/store/cartStore'
 import { useTraySheetStore } from '@/store/traySheetStore'
-import { getProductById } from '@/data/products'
+import { useContent } from '@/config/content'
 import { formatCurrency } from '@/lib/utils'
 import { triggerHaptic } from '@/lib/haptics'
 import { DURATION, EASE } from '@/lib/motion'
 import type { CartItem } from '@/types'
 
 export const TrayItemRow = memo(function TrayItemRow({ item }: { item: CartItem }) {
+  const content = useContent()
   const updateQuantity = useCartStore((s) => s.updateQuantity)
   const removeItem = useCartStore((s) => s.removeItem)
   const editItem = useTraySheetStore((s) => s.editItem)
-  const canEdit = Boolean(getProductById(item.productId))
+  const canEdit = content.products.some((product) => product.id === item.productId)
 
   return (
     <motion.div

@@ -13,14 +13,14 @@ import {
 } from '@/components/decor/Doodles'
 import { FloatingDoodle } from '@/components/craft/FloatingDoodle'
 import { PageTab } from '@/components/decor/PageTab'
-import { SITE_CONFIG, CONTENT } from '@/config/content'
+import { useContent } from '@/config/content'
 import { DURATION, EASE } from '@/lib/motion'
 import { products } from '@/data/products'
 
-const hero = CONTENT.hero
-const [headlineLine1, headlineHighlight] = hero.headline.split('\n')
-
 export function HeroSection() {
+  const content = useContent()
+  const hero = content.hero
+  const [headlineLine1, headlineHighlight] = hero.headline.split('\n')
   const heroProduct = products[0]
 
   return (
@@ -59,7 +59,7 @@ export function HeroSection() {
               </h1>
 
               <p className="font-serif italic text-lg sm:text-xl text-coral-deep mb-5 lg:mb-8">
-                {SITE_CONFIG.tagline}
+                {content.site.tagline}
               </p>
 
               <motion.div

@@ -1,10 +1,9 @@
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { MessageCircle, Mail, Camera } from 'lucide-react'
-import { SITE_CONFIG, CONTENT } from '@/config/content'
+import { useContent } from '@/config/content'
 import { withBase } from '@/lib/utils'
 
-const footer = CONTENT.footer
 import {
   StarDoodle,
   HeartDoodle,
@@ -18,6 +17,9 @@ import { EDITORIAL_STRINGS } from '@/config/editorialStrings'
 import logo from '@/assets/logo-tophat.png'
 
 export function Footer() {
+  const content = useContent()
+  const footer = content.footer
+
   return (
     <footer
       className="relative mt-8 deckle-top page-fold overflow-hidden bg-ink text-cream pt-7 sm:pt-16 pb-8 sm:pb-10"
@@ -49,11 +51,11 @@ export function Footer() {
             {footer.thankYouLines[1]}
           </p>
           <p className="text-cream/55 text-sm max-w-md mx-auto mb-3">
-            {SITE_CONFIG.tagline} — every dish tells a story, every ingredient matters.
+            {content.site.tagline} — every dish tells a story, every ingredient matters.
           </p>
-          <p className="font-hand text-xl text-cream/60 mb-4">— Team {SITE_CONFIG.brandName}</p>
+          <p className="font-hand text-xl text-cream/60 mb-4">— Team {content.site.brandName}</p>
           <p className="font-hand text-4xl sm:text-5xl italic text-cream -rotate-2 inline-block">
-            {SITE_CONFIG.brandName}
+            {content.site.brandName}
           </p>
           <ScribbleUnderline className="h-3 w-48 sm:w-56 text-coral mx-auto -mt-1" />
         </div>
@@ -61,8 +63,8 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-10 pb-6 sm:pb-10">
           <div>
             <div className="flex items-center gap-2 justify-center sm:justify-start">
-              <img src={logo} alt={SITE_CONFIG.brandName} className="h-6 w-6 sm:h-7 sm:w-7 object-contain" />
-              <span className="font-hand text-2xl sm:text-3xl text-cream">{SITE_CONFIG.brandName}</span>
+              <img src={logo} alt={content.site.brandName} className="h-6 w-6 sm:h-7 sm:w-7 object-contain" />
+              <span className="font-hand text-2xl sm:text-3xl text-cream">{content.site.brandName}</span>
             </div>
             <ScribbleUnderline className="h-2.5 w-24 text-coral mt-1 mx-auto sm:mx-0" />
             <p className="text-cream/55 text-sm leading-relaxed mt-3">
@@ -100,7 +102,7 @@ export function Footer() {
             </h4>
             <div className="flex gap-3 justify-center sm:justify-start mb-5">
               <a
-                href={`https://wa.me/${SITE_CONFIG.whatsappNumber}`}
+                href={`https://wa.me/${content.site.whatsappNumber}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
@@ -109,7 +111,7 @@ export function Footer() {
                 <MessageCircle className="h-[18px] w-[18px]" />
               </a>
               <a
-                href={`mailto:${SITE_CONFIG.supportEmail}`}
+                href={`mailto:${content.site.supportEmail}`}
                 aria-label="Email"
                 className="h-10 w-10 rounded-full bg-cream/10 flex items-center justify-center text-cream/80 hover:bg-butter hover:text-ink transition-colors"
               >
@@ -138,7 +140,7 @@ export function Footer() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-cream/40">
-            © {new Date().getFullYear()} {SITE_CONFIG.brandName}. All rights reserved.
+            © {new Date().getFullYear()} {content.site.brandName}. All rights reserved.
           </p>
           <p className="text-xs text-cream/40 flex items-center gap-1.5">
             {footer.bottomNote} <HeartDoodle className="h-3.5 w-3.5 text-pink" />

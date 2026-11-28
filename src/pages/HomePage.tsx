@@ -7,10 +7,10 @@ import {
   FAQSection,
 } from '@/components/home/HomeSections'
 import { SectionDivider } from '@/components/decor/SectionDivider'
-import { CONTENT } from '@/config/content'
+import { useContent } from '@/config/content'
 
 export function HomePage() {
-  const sections = CONTENT.sections
+  const { sections } = useContent()
 
   return (
     <>

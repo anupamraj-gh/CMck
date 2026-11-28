@@ -3,7 +3,7 @@ import { useLocation, useOutlet } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Header } from './Header'
 import { Footer } from './Footer'
-import { CONTENT } from '@/config/content'
+import { useContent } from '@/config/content'
 import { FloatingKitchenTray } from '@/components/tray/FloatingKitchenTray'
 import { FlyingCardsLayer } from '@/components/tray/FlyingCardsLayer'
 import { KitchenTraySheet } from '@/components/tray/KitchenTraySheet'
@@ -22,7 +22,7 @@ import { DURATION, EASE } from '@/lib/motion'
  * so they persist across navigation instead of remounting with the page.
  */
 export function Layout() {
-  const sections = CONTENT.sections
+  const { sections } = useContent()
   const isSheetOpen = useTraySheetStore((s) => s.isOpen)
   const location = useLocation()
   const outlet = useOutlet()

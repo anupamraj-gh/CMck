@@ -6,24 +6,25 @@ import { Button } from '@/components/ui/button'
 import { DURATION, EASE } from '@/lib/motion'
 import { ScribbleUnderline } from '@/components/decor/Doodles'
 import { useCartStore } from '@/store/cartStore'
-import { SITE_CONFIG, CONTENT } from '@/config/content'
+import { useContent } from '@/config/content'
 import { withBase } from '@/lib/utils'
 import logo from '@/assets/logo-tophat.png'
 
 export function Header() {
+  const content = useContent()
   const itemCount = useCartStore((s) => s.getItemCount())
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const navLinks = CONTENT.nav.links
+  const navLinks = content.nav.links
 
   return (
     <header className="fixed top-3 left-0 right-0 z-50 px-3 sm:top-4 sm:px-6">
       <div className="mx-auto max-w-5xl rounded-full border-2 border-ink/10 bg-paper/80 craft-shadow backdrop-blur-lg">
         <div className="flex h-14 sm:h-16 items-center justify-between pl-4 pr-2 sm:pl-6 sm:pr-3">
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img src={logo} alt={SITE_CONFIG.brandName} className="h-7 w-7 sm:h-8 sm:w-8 object-contain shrink-0" />
+            <img src={logo} alt={content.site.brandName} className="h-7 w-7 sm:h-8 sm:w-8 object-contain shrink-0" />
             <span className="font-hand text-2xl sm:text-3xl font-bold text-ink leading-none">
-              {SITE_CONFIG.brandName}
+              {content.site.brandName}
             </span>
           </Link>
 

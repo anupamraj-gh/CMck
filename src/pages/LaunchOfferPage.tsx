@@ -9,13 +9,13 @@ import { WashiTape } from '@/components/decor/Doodles'
 import { useCartStore } from '@/store/cartStore'
 import { useTraySheetStore } from '@/store/traySheetStore'
 import { formatCurrency } from '@/lib/utils'
-import { CONTENT } from '@/config/content'
+import { useContent } from '@/config/content'
 
 export function LaunchOfferPage() {
   const [selectedBundleId, setSelectedBundleId] = useState('')
   const addItem = useCartStore((state) => state.addItem)
   const openTray = useTraySheetStore((state) => state.open)
-  const { launchOffer } = CONTENT
+  const { launchOffer } = useContent()
   const { bundles: launchBundles } = launchOffer
   const selectedBundle = launchBundles.find((bundle) => bundle.id === selectedBundleId)
 

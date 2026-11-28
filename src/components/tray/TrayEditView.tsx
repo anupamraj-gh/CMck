@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn, formatCurrency } from '@/lib/utils'
-import { getProductById } from '@/data/products'
+import { useContent } from '@/config/content'
 import { useCartStore, customizationsToSelections, areRequiredSelectionsComplete } from '@/store/cartStore'
 import { useTraySheetStore } from '@/store/traySheetStore'
 import { usePricing } from '@/hooks/usePricing'
@@ -21,9 +21,10 @@ import { DURATION, EASE } from '@/lib/motion'
 import type { CartItem } from '@/types'
 
 export function TrayEditView({ item }: { item: CartItem }) {
+  const content = useContent()
   const updateCustomizations = useCartStore((s) => s.updateCustomizations)
   const closeEdit = useTraySheetStore((s) => s.closeEdit)
-  const product = getProductById(item.productId)
+  const product = content.products.find((product) => product.id === item.productId)
 
   // The parent keys this component by item.id, so a fresh instance (and this lazy initializer)
   // only runs when switching to a different item — not on every selection made while editing.

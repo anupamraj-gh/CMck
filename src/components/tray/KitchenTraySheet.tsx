@@ -11,7 +11,7 @@ import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { PaperSettleValue } from '@/components/craft/PaperSettleValue'
 import { formatCurrency, withBase } from '@/lib/utils'
 import { triggerHaptic } from '@/lib/haptics'
-import { SITE_CONFIG } from '@/config/content'
+import { useContent } from '@/config/content'
 import { EDITORIAL_STRINGS } from '@/config/editorialStrings'
 import { EmptyTrayDoodle } from '@/components/decor/Doodles'
 import { MOTION } from '@/lib/motion'
@@ -19,6 +19,7 @@ import { TrayItemRow } from './TrayItemRow'
 import { TrayEditView } from './TrayEditView'
 
 export function KitchenTraySheet() {
+  const site = useContent().site
   const isOpen = useTraySheetStore((s) => s.isOpen)
   const editingItemId = useTraySheetStore((s) => s.editingItemId)
   const close = useTraySheetStore((s) => s.close)
@@ -150,9 +151,9 @@ export function KitchenTraySheet() {
                           <PaperSettleValue value={deliveryCharge === 0 ? 'FREE' : formatCurrency(deliveryCharge)} />
                         </span>
                       </div>
-                      {subtotal < SITE_CONFIG.freeDeliveryAbove && (
+                      {subtotal < site.freeDeliveryAbove && (
                         <p className="text-xs text-ink-soft">
-                          Free delivery on orders above {formatCurrency(SITE_CONFIG.freeDeliveryAbove)}
+                          Free delivery on orders above {formatCurrency(site.freeDeliveryAbove)}
                         </p>
                       )}
                       <Separator />
