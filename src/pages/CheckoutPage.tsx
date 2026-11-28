@@ -12,8 +12,8 @@ import { WhatsAppCtaStep } from '@/components/checkout/WhatsAppCtaStep'
 import { useCheckoutFlow, type CheckoutStepId } from '@/hooks/useCheckoutFlow'
 import { useCartStore } from '@/store/cartStore'
 import { formatCurrency, generateOrderId } from '@/lib/utils'
-import { downloadInvoice } from '@/lib/invoice'
-import { redirectToWhatsApp } from '@/lib/whatsapp'
+import { createInvoiceFile, downloadInvoice } from '@/lib/invoice'
+import { buildWhatsAppMessage, redirectToWhatsApp } from '@/lib/whatsapp'
 import { isWithinDeliveryArea } from '@/lib/deliveryArea'
 import { EDITORIAL_STRINGS } from '@/config/editorialStrings'
 import type { CustomerInfo, DeliveryInfo, Order } from '@/types'
@@ -70,6 +70,8 @@ export function CheckoutPage() {
   const [customerErrors, setCustomerErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({})
   const [deliveryErrors, setDeliveryErrors] = useState<Partial<Record<keyof DeliveryInfo, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
+  const [invoiceShared, setInvoiceShared] = useState(false)
   // Distinguishes "order just placed" from "cart was never filled" — both end up rendering the
   // same empty-cart branch below (clearCart() empties `items` either way), but they should not
   // read as the same moment to the customer.
@@ -180,6 +182,8 @@ export function CheckoutPage() {
     if (!validate()) return
 
     setIsSubmitting(true)
+    setSubmissionError(null)
+    setInvoiceShared(false)
 
     const order: Order = {
       orderId: generateOrderId(),
@@ -198,11 +202,40 @@ export function CheckoutPage() {
       grandTotal,
     }
 
-    downloadInvoice(order)
-    redirectToWhatsApp(order)
-    setOrderPlaced(true)
-    clearCart()
-    setIsSubmitting(false)
+    try {
+      if (
+        typeof File !== 'undefined'
+        && typeof navigator.share === 'function'
+        && typeof navigator.canShare === 'function'
+      ) {
+        const invoice = createInvoiceFile(order)
+        if (navigator.canShare({ files: [invoice] })) {
+          await navigator.share({
+            files: [invoice],
+            title: `Invoice ${order.orderId}`,
+            text: buildWhatsAppMessage(order),
+          })
+          setInvoiceShared(true)
+        } else {
+          downloadInvoice(order)
+          redirectToWhatsApp(order)
+        }
+      } else {
+        downloadInvoice(order)
+        redirectToWhatsApp(order)
+      }
+
+      setOrderPlaced(true)
+      clearCart()
+    } catch (error) {
+      const sharingCancelled = error instanceof Error && error.name === 'AbortError'
+      if (!sharingCancelled) console.error('Unable to share the order invoice', error)
+      setSubmissionError(sharingCancelled
+        ? 'Sharing was cancelled. Your tray is unchanged; try again when ready.'
+        : 'We could not share the invoice. Please try again, or download it and attach it in WhatsApp.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }, [items, validate, customer, delivery, subtotal, deliveryCharge, grandTotal, clearCart])
 
   if (items.length === 0) {
@@ -225,7 +258,9 @@ export function CheckoutPage() {
               </div>
               <h2 className="font-hand text-3xl text-ink mb-2">Sent to the kitchen.</h2>
               <p className="text-ink/70 mb-6 max-w-xs">
-                Your invoice downloaded and your order is waiting in WhatsApp — confirm there to finish up.
+                {invoiceShared
+                  ? 'Your invoice and order details were shared. Check WhatsApp to confirm the message was sent.'
+                  : 'Your invoice downloaded. Attach it to the WhatsApp message and tap Send to finish your order.'}
               </p>
             </>
           ) : (
@@ -356,7 +391,12 @@ export function CheckoutPage() {
             wobble={3}
             onEdit={handleEditWhatsapp}
           >
-            <WhatsAppCtaStep grandTotal={grandTotal} isSubmitting={isSubmitting} onPayNow={handlePayNow} />
+            <WhatsAppCtaStep
+              grandTotal={grandTotal}
+              isSubmitting={isSubmitting}
+              submissionError={submissionError}
+              onPayNow={handlePayNow}
+            />
           </CheckoutStepCard>
         </div>
       </div>

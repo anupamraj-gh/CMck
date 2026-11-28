@@ -138,3 +138,10 @@ export function downloadInvoice(order: Order): void {
   const doc = generateInvoicePdf(order)
   doc.save(`invoice-${order.orderId}.pdf`)
 }
+
+export function createInvoiceFile(order: Order): File {
+  const doc = generateInvoicePdf(order)
+  return new File([doc.output('blob')], `invoice-${order.orderId}.pdf`, {
+    type: 'application/pdf',
+  })
+}

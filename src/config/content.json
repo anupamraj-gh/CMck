@@ -191,7 +191,7 @@
     "items": [
       {
         "q": "How does WhatsApp checkout work?",
-        "a": "After filling your delivery details and clicking Pay Now, we generate an invoice and open WhatsApp with your complete order summary. Simply tap Send to place your order.",
+        "a": "After filling in your delivery details, tap Share order & invoice. On supported devices, choose WhatsApp from the share sheet to send the PDF invoice and order summary. If file sharing is unavailable, the invoice downloads and WhatsApp opens with your order details; attach the PDF before sending.",
         "tab": "mint"
       },
       {

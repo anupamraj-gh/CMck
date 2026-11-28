@@ -92,11 +92,21 @@ async function searchWithPhoton(query: string, signal: AbortSignal): Promise<Pho
     && distanceInMeters(OUTLET_LOCATION, result.coordinates) <= DELIVERY_RADIUS_METERS)
 }
 
+const selectedMarkerSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))" aria-hidden="true"><path fill="#4285F4" stroke="#fff" stroke-width=".75" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="#fff"/></svg>'
+
+function createGoogleSelectedMarkerIcon(): google.maps.Icon {
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(selectedMarkerSvg)}`,
+    scaledSize: new google.maps.Size(36, 36),
+    anchor: new google.maps.Point(18, 33),
+  }
+}
+
 const selectedMarker = L.divIcon({
   className: 'selected-location-marker',
-  html: '<span style="display:block;width:18px;height:18px;border:3px solid white;border-radius:50%;background:#c26e58;box-shadow:0 1px 5px rgba(0,0,0,.5)"></span>',
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
+  html: selectedMarkerSvg,
+  iconSize: [36, 36],
+  iconAnchor: [18, 33],
 })
 
 function MapClickHandler({ onSelect }: { onSelect: (coordinates: Coordinates) => void }) {
@@ -200,14 +210,7 @@ function GoogleMapView({ center, selected, onSelect, onReady, onError }: GoogleM
           position: { lat: initialSelected[0], lng: initialSelected[1] },
           title: 'Selected delivery location',
           draggable: true,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 9,
-            fillColor: '#c26e58',
-            fillOpacity: 1,
-            strokeColor: '#ffffff',
-            strokeWeight: 3,
-          },
+          icon: createGoogleSelectedMarkerIcon(),
         })
         markerDragListener.current = addSelectedMarkerDragListener(
           marker.current,
@@ -243,14 +246,7 @@ function GoogleMapView({ center, selected, onSelect, onReady, onError }: GoogleM
         map: map.current,
         title: 'Selected delivery location',
         draggable: true,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 9,
-          fillColor: '#c26e58',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 3,
-        },
+        icon: createGoogleSelectedMarkerIcon(),
       })
       if (!markerDragListener.current) {
         markerDragListener.current = addSelectedMarkerDragListener(
